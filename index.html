@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <style>body{margin:0}</style>
-<title>Lernzeit</title>
+<title>Studytimer</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -192,6 +192,18 @@ kbd{font-family:var(--body);font-size:12px;padding:2px 6px;border:1px solid var(
 .pbtns{display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap}
 .d-btn{height:44px;padding:0 20px;border-radius:22px;border:1px solid var(--f-line);background:transparent;color:#B8C9C3;font-size:14px}
 .d-btn.main{background:var(--f-accent);border-color:var(--f-accent);color:#10191C;font-weight:500}
+.setup-notes{width:100%;box-sizing:border-box;min-height:120px;resize:vertical;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);line-height:1.5}
+.ic.on{color:var(--f-ink);border-color:var(--f-accent)}
+.drawer{position:fixed;top:0;right:0;bottom:0;z-index:20;width:min(420px,100%);box-sizing:border-box;background:#152124;border-left:1px solid var(--f-line);color:var(--f-ink);color-scheme:dark;display:flex;flex-direction:column;gap:14px;
+  padding:calc(28px + env(safe-area-inset-top,0px)) max(24px,env(safe-area-inset-right,0px)) calc(28px + env(safe-area-inset-bottom,0px)) 24px}
+@media (min-width:700px){body.notes-open .stage .clock,body.notes-open .stage-top,body.notes-open .stage-bottom{right:420px}}
+.drawer-head{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.drawer .label{color:var(--f-muted)}
+.drawer .plan-notes{flex:1;resize:none;min-height:0}
+.drawer .saved{font-size:12px;color:var(--f-muted)}
+.done-notes{max-width:60ch;width:100%;box-sizing:border-box;text-align:left;background:#18262A;border-radius:16px;padding:18px 20px;display:flex;flex-direction:column;gap:8px}
+.done-notes .label{color:var(--f-muted)}
+.done-notes p{margin:0;color:var(--f-ink);font-size:15px;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere;max-height:30vh;overflow:auto}
 .wait{color:var(--f-muted);font-size:15px;line-height:1.6;max-width:56ch}
 </style>
 </head>
@@ -200,7 +212,7 @@ kbd{font-family:var(--body);font-size:12px;padding:2px 6px;border:1px solid var(
 <!-- ===== Einrichten ===== -->
 <main id="setup" class="view">
   <header class="top">
-    <div class="brand"><svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><circle cx="14" cy="14" r="12" fill="none" stroke-width="2"/><path d="M14 2a12 12 0 0 1 12 12H14z"/></svg>Lernzeit</div>
+    <div class="brand"><svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><circle cx="14" cy="14" r="12" fill="none" stroke-width="2"/><path d="M14 2a12 12 0 0 1 12 12H14z"/></svg>Studytimer</div>
     <div class="top-right">
       <span class="summary" id="summary"></span>
       <button class="btn-primary" id="start"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>Im Vollbild starten</button>
@@ -257,7 +269,11 @@ kbd{font-family:var(--body);font-size:12px;padding:2px 6px;border:1px solid var(
         <div class="bar" id="bar"></div>
         <div class="flow-legend"><span id="lg-f"></span><span id="lg-p"></span></div>
       </div>
-      <p class="hint">Im Timer: <kbd>Leertaste</kbd> pausiert, <kbd>F</kbd> schaltet Vollbild, <kbd>Esc</kbd> verlässt es. Einstellungen und Favoriten bleiben in diesem Browser gespeichert.</p>
+      <div class="flow">
+        <label class="label" for="notes-setup">Notizen</label>
+        <textarea class="notes-field setup-notes" id="notes-setup" placeholder="Gedanken, Fragen, To-dos für später …"></textarea>
+      </div>
+      <p class="hint">Im Timer: <kbd>Leertaste</kbd> pausiert, <kbd>N</kbd> öffnet Notizen, <kbd>F</kbd> schaltet Vollbild, <kbd>Esc</kbd> verlässt es. Einstellungen, Favoriten und Notizen bleiben in diesem Browser gespeichert.</p>
     </aside>
   </div>
 </main>
@@ -270,6 +286,7 @@ kbd{font-family:var(--body);font-size:12px;padding:2px 6px;border:1px solid var(
     <div class="dots" id="f-dots"></div>
     <div class="ctrls">
       <button class="ic" id="plan-open" hidden aria-label="Plan-Fenster öffnen"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="8" height="12" rx="1.5"/><rect x="13" y="5" width="8" height="12" rx="1.5"/></svg></button>
+      <button class="ic" id="b-notes" aria-label="Notizen" aria-expanded="false" aria-controls="drawer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13 7l4 4"/></svg></button>
       <button class="ic" id="b-toggle" aria-label="Pausieren"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5v14M15 5v14"/></svg></button>
       <button class="ic" id="b-skip" aria-label="Session beenden und zur Pause"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5l9 7-9 7zM18 5v14"/></svg></button>
       <button class="ic" id="b-fs" aria-label="Vollbild umschalten"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
@@ -290,6 +307,7 @@ kbd{font-family:var(--body);font-size:12px;padding:2px 6px;border:1px solid var(
   <div class="stage-bottom">
     <div class="dots" id="p-dots"></div>
     <div class="ctrls" style="flex-wrap:wrap">
+      <button class="p-btn" id="p-notes" aria-expanded="false" aria-controls="drawer">Notizen</button>
       <button class="p-btn" id="p-add">+ 5 min</button>
       <button class="p-btn main" id="p-end">Pause beenden</button>
     </div>
@@ -302,9 +320,17 @@ kbd{font-family:var(--body);font-size:12px;padding:2px 6px;border:1px solid var(
     <svg width="120" height="80" viewBox="0 0 120 80" aria-hidden="true"><path d="M4 76L44 20l18 24 12-14 42 46z" fill="#1E3233"/><path d="M44 20V2l16 6-16 6" fill="#E9B97A" stroke="#E9B97A" stroke-width="2" stroke-linejoin="round"/></svg>
     <h1>Gipfel erreicht.</h1>
     <p id="done-txt"></p>
+    <div class="done-notes" id="done-notes" hidden><span class="label">Deine Notizen</span><p id="done-notes-txt"></p></div>
     <button class="d-btn main" id="done-back">Zurück zur Übersicht</button>
   </div></div>
 </section>
+
+<!-- ===== Notizen (1 Monitor) ===== -->
+<aside id="drawer" class="drawer" hidden aria-label="Notizen">
+  <div class="drawer-head"><label class="label" for="notes-drawer">Gedanken parken</label><button class="ic" id="d-close" aria-label="Notizen schliessen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <textarea class="notes-field plan-notes" id="notes-drawer" placeholder="Was dir gerade einfällt, aber nicht zur Aufgabe gehört …"></textarea>
+  <span class="saved">Wird automatisch gespeichert</span>
+</aside>
 
 <!-- ===== Plan (zweiter Monitor) ===== -->
 <section id="plan" class="view" hidden aria-label="Lernplan">
@@ -327,7 +353,7 @@ kbd{font-family:var(--body);font-size:12px;padding:2px 6px;border:1px solid var(
       </div>
       <div style="display:flex;flex-direction:column;gap:10px">
         <label class="label" for="notes">Gedanken parken – später erledigen</label>
-        <textarea class="plan-notes" id="notes" placeholder="Was dir gerade einfällt, aber nicht zur Aufgabe gehört …"></textarea>
+        <textarea class="notes-field plan-notes" id="notes" placeholder="Was dir gerade einfällt, aber nicht zur Aufgabe gehört …"></textarea>
       </div>
       <div class="pbtns">
         <button class="d-btn" id="pl-fs">Vollbild</button>
@@ -343,8 +369,8 @@ kbd{font-family:var(--body);font-size:12px;padding:2px 6px;border:1px solid var(
 (() => {
 const $ = (id) => document.getElementById(id);
 const store = {
-  get(k, d) { try { const v = localStorage.getItem('lernzeit.' + k); return v ? JSON.parse(v) : d; } catch { return d; } },
-  set(k, v) { try { localStorage.setItem('lernzeit.' + k, JSON.stringify(v)); } catch {} }
+  get(k, d) { try { const v = localStorage.getItem('studytimer.' + k) ?? localStorage.getItem('lernzeit.' + k); return v ? JSON.parse(v) : d; } catch { return d; } },
+  set(k, v) { try { localStorage.setItem('studytimer.' + k, JSON.stringify(v)); } catch {} }
 };
 const STYLE_NAMES = { ring: 'Ring', sand: 'Sanduhr', berg: 'Bergsteiger', digital: 'Ziffern' };
 const DEFAULT_FAVS = [
@@ -357,7 +383,7 @@ let S = Object.assign({ focus: 50, breakM: 10, sessions: 3, style: 'ring', scree
 let favs = store.get('favs', DEFAULT_FAVS);
 let run = null; // {phase, idx, endAt, left, paused, log:[{kind,start,end}], cfg}
 const isPlan = location.hash === '#plan';
-const bc = ('BroadcastChannel' in window) ? new BroadcastChannel('lernzeit') : null;
+const bc = ('BroadcastChannel' in window) ? new BroadcastChannel('studytimer') : null;
 
 const fmt = (ms) => { const s = Math.max(0, Math.ceil(ms / 1000)); const m = Math.floor(s / 60); const h = Math.floor(m / 60);
   return h ? h + ':' + String(m % 60).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0') : String(m).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0'); };
@@ -489,13 +515,14 @@ function togglePause() { if (!run || run.phase === 'done') return;
   if (run.paused) { run.endAt = Date.now() + run.left; run.paused = false; } else { run.left = run.endAt - Date.now(); run.paused = true; }
   lastSec = -1; tick(); }
 function addFive() { if (!run) return; if (run.paused) run.left += 300000; else run.endAt += 300000; lastSec = -1; tick(); }
-function stop() { run = null; try { wake && wake.release(); } catch {} fullscreen(false); broadcast(); show(); renderSetup(); }
+function stop() { run = null; toggleNotes(false); document.title = 'Studytimer'; try { wake && wake.release(); } catch {} fullscreen(false); broadcast(); show(); renderSetup(); }
 
 function show() {
   if (isPlan) return;
   const ph = run ? run.phase : 'setup';
   $('setup').hidden = ph !== 'setup'; $('focus').hidden = ph !== 'focus'; $('pause').hidden = ph !== 'break'; $('done').hidden = ph !== 'done';
-  if (ph === 'done') { const n = run.cfg.sessions; $('done-txt').textContent = `${n} ${n === 1 ? 'Session' : 'Sessions'} · ${dur(focusedMs() / 60000)} konzentriert gelernt.`; broadcast(); }
+  if (ph === 'done') { const n = run.cfg.sessions; $('done-txt').textContent = `${n} ${n === 1 ? 'Session' : 'Sessions'} · ${dur(focusedMs() / 60000)} konzentriert gelernt.`;
+    const nt = store.get('notes', '').trim(); $('done-notes').hidden = !nt; $('done-notes-txt').textContent = nt; toggleNotes(false); broadcast(); }
   $('plan-open').hidden = !(run && run.cfg.screens === 2);
 }
 function focusedMs() { if (!run) return 0; const now = Date.now();
@@ -524,13 +551,13 @@ function tick() {
     else el.innerHTML = `<div class="c-dig">${pausedTag}<span class="time">${t}</span><div class="line"><b style="width:${((1 - frac) * 100).toFixed(2)}%"></b></div>${!dual && sub ? `<span class="sub">${sub}</span>` : ''}</div>`;
     const tg = $('b-toggle'); tg.setAttribute('aria-label', run.paused ? 'Fortsetzen' : 'Pausieren');
     tg.innerHTML = run.paused ? '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5l12 7-12 7z"/></svg>' : '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5v14M15 5v14"/></svg>';
-    document.title = `${t} · Lernzeit`;
+    document.title = `${t} · Studytimer`;
   } else {
     $('p-time').textContent = t; $('p-tag').textContent = run.paused ? 'Angehalten' : 'Pause';
     $('p-top-l').textContent = `Pause nach Session ${run.idx + 1} von ${c.sessions}`;
     $('p-top-r').textContent = `Nächste Session: ${run.idx + 2} · ${c.focus} min`;
     $('p-dots').innerHTML = dots(run);
-    document.title = `Pause ${t} · Lernzeit`;
+    document.title = `Pause ${t} · Studytimer`;
   }
   broadcast();
 }
@@ -546,14 +573,29 @@ $('p-end').onclick = () => advance(true);
 $('done-back').onclick = stop;
 $('plan-open').onclick = openPlan;
 
+/* ---------------- Notizen (in allen Ansichten und Fenstern dieselben) ---------------- */
+function syncNotes(src) { const v = src ? src.value : store.get('notes', '');
+  document.querySelectorAll('.notes-field').forEach((t) => { if (t !== src && t.value !== v) t.value = v; }); }
+document.addEventListener('input', (e) => { if (e.target.classList && e.target.classList.contains('notes-field')) { store.set('notes', e.target.value); syncNotes(e.target); } });
+window.addEventListener('storage', (e) => { if (e.key === 'studytimer.notes') syncNotes(); });
+function toggleNotes(open) { const d = $('drawer'), o = open ?? d.hidden; d.hidden = !o; document.body.classList.toggle('notes-open', o);
+  ['b-notes', 'p-notes'].forEach((id) => $(id).setAttribute('aria-expanded', String(o))); $('b-notes').classList.toggle('on', o);
+  if (o) { document.body.classList.remove('idle'); $('notes-drawer').focus(); } }
+$('b-notes').onclick = () => toggleNotes();
+$('p-notes').onclick = () => toggleNotes();
+$('d-close').onclick = () => toggleNotes(false);
+syncNotes();
+
 /* Steuerelemente nach 3 s ohne Maus zurücknehmen */
-let idleT; const wakeUi = () => { document.body.classList.remove('idle'); clearTimeout(idleT); idleT = setTimeout(() => run && run.phase === 'focus' && document.body.classList.add('idle'), 3000); };
+let idleT; const wakeUi = () => { document.body.classList.remove('idle'); clearTimeout(idleT); idleT = setTimeout(() => run && run.phase === 'focus' && $('drawer').hidden && document.body.classList.add('idle'), 3000); };
 ['mousemove', 'keydown', 'touchstart'].forEach((ev) => document.addEventListener(ev, wakeUi, { passive: true }));
 
 document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && !$('drawer').hidden) { toggleNotes(false); return; }
   if (e.target.closest('input,textarea')) return;
   if (e.key === 'f' || e.key === 'F') { e.preventDefault(); fullscreen(); }
   else if (e.code === 'Space' && run && !isPlan) { e.preventDefault(); togglePause(); }
+  else if ((e.key === 'n' || e.key === 'N') && run && !isPlan && run.phase !== 'done') { e.preventDefault(); toggleNotes(); }
 });
 
 /* ---------------- Zweiter Monitor ---------------- */
@@ -562,7 +604,7 @@ async function openPlan() {
   let feat = 'popup,width=1280,height=800';
   try { if ('getScreenDetails' in window) { const sd = await window.getScreenDetails(); const other = sd.screens.find((s) => s !== sd.currentScreen);
     if (other) feat = `popup,left=${other.availLeft},top=${other.availTop},width=${other.availWidth},height=${other.availHeight}`; } } catch {}
-  let w = null; try { w = window.open(url, 'lernzeit-plan', feat); } catch {}
+  let w = null; try { w = window.open(url, 'studytimer-plan', feat); } catch {}
   if (!w) { $('dual-note').hidden = false; }
   setTimeout(broadcast, 600);
 }
@@ -572,7 +614,7 @@ if (bc && !isPlan) bc.onmessage = (e) => { const m = e.data; if (m.type === 'hel
   else if (m.type === 'cmd' && run) { ({ toggle: togglePause, skip: () => advance(true), stop, add5: addFive })[m.cmd]?.(); } };
 
 function initPlan() {
-  $('setup').hidden = true; $('plan').hidden = false; document.title = 'Plan · Lernzeit';
+  $('setup').hidden = true; $('plan').hidden = false; document.title = 'Plan · Studytimer';
   let R = null, off = 0;
   const send = (cmd) => bc && bc.postMessage({ type: 'cmd', cmd });
   $('pl-toggle').onclick = () => send('toggle'); $('pl-skip').onclick = () => send('skip'); $('pl-stop').onclick = () => send('stop'); $('pl-fs').onclick = () => fullscreen();
@@ -581,7 +623,6 @@ function initPlan() {
   $('todos').addEventListener('change', (e) => { const i = +e.target.dataset.i; todos[i].done = e.target.checked; store.set('todos', todos); drawTodos(); });
   $('todos').addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; todos.splice(+b.dataset.x, 1); store.set('todos', todos); drawTodos(); });
   $('todo-form').addEventListener('submit', (e) => { e.preventDefault(); const v = $('todo-in').value.trim(); if (!v) return; todos.push({ text: v, done: false }); store.set('todos', todos); $('todo-in').value = ''; drawTodos(); });
-  $('notes').value = store.get('notes', ''); $('notes').addEventListener('input', (e) => store.set('notes', e.target.value));
   drawTodos();
   const draw = () => {
     $('pl-wait').hidden = !!R;
