@@ -119,7 +119,11 @@ kbd{font-family:var(--body);font-size:12px;padding:2px 6px;border:1px solid var(
 .ic svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8}
 .ic:hover{color:var(--f-ink)}
 .clock{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
-.time{font-family:var(--display);font-weight:300;letter-spacing:-.03em;line-height:1;font-variant-numeric:tabular-nums}
+.time{font-family:var(--display);font-weight:300;letter-spacing:-.03em;line-height:1;font-variant-numeric:tabular-nums lining-nums;font-feature-settings:"tnum" 1,"lnum" 1}
+.time .dg{display:inline-block;width:.56em;text-align:center;letter-spacing:0}
+.time .dc{display:inline-block;width:.24em;text-align:center;letter-spacing:0}
+@media (prefers-reduced-motion:no-preference){.time .dg.roll{animation:dg-roll .7s cubic-bezier(.25,.8,.3,1)}}
+@keyframes dg-roll{from{opacity:.15;transform:translateY(.08em);filter:blur(2px)}to{opacity:1;transform:none;filter:none}}
 .sub{font-size:16px;color:var(--f-muted);text-align:center}
 .c-ring{position:relative;width:min(68vmin,640px);aspect-ratio:1;max-width:100%}
 .c-ring svg{position:absolute;inset:0;width:100%;height:100%}
@@ -130,10 +134,11 @@ kbd{font-family:var(--body);font-size:12px;padding:2px 6px;border:1px solid var(
 .tick{stroke:#26383A;stroke-width:1.2;stroke-linecap:round}.tick.major{stroke:var(--f-mid);stroke-width:2}
 .c-sand{display:flex;align-items:center;justify-content:center;gap:min(9vw,120px);padding:0 24px}
 .c-sand svg{height:min(68vh,640px);width:auto;flex:none}
-.c-sand .col{display:flex;flex-direction:column;gap:14px}
+.c-sand .col{display:flex;flex-direction:column;gap:14px;width:min(44vw,58vh,540px);flex:none}
+.sand-stream{stroke:var(--sand);stroke-width:1.5}
 .c-sand .time{font-size:min(15vw,20vh,184px)}
 .c-sand .sub{text-align:left}
-@media (max-width:700px){.c-sand{flex-direction:column;gap:24px}.c-sand svg{height:40vh}.c-sand .col{align-items:center}.c-sand .sub{text-align:center}}
+@media (max-width:700px){.c-sand{flex-direction:column;gap:24px}.c-sand svg{height:40vh}.c-sand .col{align-items:center;width:auto}.c-sand .sub{text-align:center}}
 .glass{fill:none;stroke:#3E5A57;stroke-width:2.5}.cap-wood{fill:#4A3F33}.sandfill{fill:var(--sand)}
 .c-berg svg{position:absolute;inset:0;width:100%;height:100%}
 .c-berg .over{position:absolute;top:calc(110px + env(safe-area-inset-top,0px));left:max(40px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:12px}
@@ -374,7 +379,7 @@ kbd{font-family:var(--body);font-size:12px;padding:2px 6px;border:1px solid var(
 <section id="alarm" class="alarm" hidden role="alertdialog" aria-modal="true" aria-labelledby="al-title" aria-describedby="al-sub">
   <div class="al-core">
     <span class="al-kicker" id="al-kicker"></span>
-    <span class="al-grow"><span class="al-ripples" aria-hidden="true"><i></i><i></i><i></i></span><span class="time al-time">00:00</span></span>
+    <span class="al-grow"><span class="al-ripples" aria-hidden="true"><i></i><i></i><i></i></span><span class="time al-time"><span class="dg">0</span><span class="dg">0</span><span class="dc">:</span><span class="dg">0</span><span class="dg">0</span></span></span>
     <h1 id="al-title"></h1>
     <p id="al-sub"></p>
     <div class="al-btns"><button class="al-btn" id="al-more"></button><button class="al-btn main" id="al-go"></button></div>
@@ -449,6 +454,13 @@ const pairId = isPlan ? (location.hash.slice(6) || null) : Math.random().toStrin
 let screenDetails = null, screenState = 'unknown', planWin = null, popupBlocked = false;
 const bc = ('BroadcastChannel' in window) ? new BroadcastChannel('studytimer') : null;
 
+/* Jede Ziffer bekommt einen festen Platz; nur geänderte Ziffern blenden weich ein */
+const digitsHtml = (t) => [...t].map((c) => c === ':' ? '<span class="dc">:</span>' : `<span class="dg">${c}</span>`).join('');
+function setTime(el, t) { if (!el || el.dataset.t === t) return;
+  const ch = [...t], kids = el.children;
+  if (kids.length !== ch.length || ch.some((c, i) => (c === ':') !== kids[i].classList.contains('dc'))) el.innerHTML = digitsHtml(t);
+  else ch.forEach((c, i) => { const k = kids[i]; if (k.textContent !== c) { k.textContent = c; k.classList.remove('roll'); void k.offsetWidth; k.classList.add('roll'); } });
+  el.dataset.t = t; }
 const fmt = (ms) => { const s = Math.max(0, Math.ceil(ms / 1000)); const m = Math.floor(s / 60); const h = Math.floor(m / 60);
   return h ? h + ':' + String(m % 60).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0') : String(m).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0'); };
 const clockAt = (t) => new Date(t).toLocaleTimeString('de-CH', { hour: '2-digit', minute: '2-digit' });
@@ -461,20 +473,27 @@ for (let i = 0; i < 60; i++) { const a = i / 60 * 2 * Math.PI - Math.PI / 2, mj 
   TICKS += `<line class="tick${mj ? ' major' : ''}" x1="${(310 + 292 * Math.cos(a)).toFixed(1)}" y1="${(310 + 292 * Math.sin(a)).toFixed(1)}" x2="${(310 + r2 * Math.cos(a)).toFixed(1)}" y2="${(310 + r2 * Math.sin(a)).toFixed(1)}"/>`; }
 const ringSvg = (frac) => { const C = 2 * Math.PI * 262;
   return `<svg viewBox="0 0 620 620" aria-hidden="true">${TICKS}<circle class="ring-track" cx="310" cy="310" r="262"/><circle class="ring-arc" cx="310" cy="310" r="262" stroke-dasharray="${(C * frac).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 310 310)"/></svg>`; };
-const sandSvg = (frac, running) => { const lvl = 140 + (1 - frac) * 166, h = (1 - frac) * 80, top = 608 - 1.5 * h;
-  return `<svg viewBox="0 0 360 640" role="img" aria-label="Sanduhr"><defs><clipPath id="sc"><rect x="0" y="${lvl.toFixed(1)}" width="360" height="${(306 - lvl).toFixed(1)}"/></clipPath></defs>
+const sandGeo = (frac) => { const lvl = 140 + (1 - frac) * 166, h = (1 - frac) * 80; return { lvl, h, top: 608 - 1.5 * h }; };
+const sandPile = (g) => g.h > 0.5 ? `M74 608C110 ${g.top.toFixed(1)} 250 ${g.top.toFixed(1)} 286 608Z` : 'M74 608Z';
+const sandSvg = (frac, running, id) => { const g = sandGeo(frac); id = id || 'sc';
+  return `<svg viewBox="0 0 360 640" role="img" aria-label="Sanduhr"><defs><clipPath id="${id}"><rect class="sand-clip" x="0" y="${g.lvl.toFixed(1)}" width="360" height="${Math.max(0, 306 - g.lvl).toFixed(1)}"/></clipPath></defs>
   <rect class="cap-wood" x="40" y="16" width="280" height="14" rx="7"/><rect class="cap-wood" x="40" y="610" width="280" height="14" rx="7"/>
   <path class="glass" d="M64 30C64 170 168 250 172 320C168 390 64 470 64 610M296 30C296 170 192 250 188 320C192 390 296 470 296 610"/>
-  ${frac > 0.002 ? `<path class="sandfill" clip-path="url(#sc)" d="M70 40H290C278 150 204 272 186 306H174C156 272 82 150 70 40Z"/>` : ''}
-  ${running && frac > 0.002 ? `<line x1="180" y1="314" x2="180" y2="${Math.max(top, 330).toFixed(0)}" stroke="var(--sand)" stroke-width="1.5" opacity=".8"/>` : ''}
-  ${h > 0.5 ? `<path class="sandfill" d="M74 608C110 ${top.toFixed(1)} 250 ${top.toFixed(1)} 286 608Z"/>` : ''}</svg>`; };
+  <path class="sandfill" clip-path="url(#${id})" d="M70 40H290C278 150 204 272 186 306H174C156 272 82 150 70 40Z"/>
+  <line class="sand-stream" x1="180" y1="314" x2="180" y2="${Math.max(g.top, 330).toFixed(0)}" opacity="${running && frac > 0.002 ? 0.8 : 0}"/>
+  <path class="sandfill sand-pile" d="${sandPile(g)}"/></svg>`; };
+function updateSand(el, frac, running) { const g = sandGeo(frac), r = el.querySelector('.sand-clip'), st = el.querySelector('.sand-stream');
+  r.setAttribute('y', g.lvl.toFixed(1)); r.setAttribute('height', Math.max(0, 306 - g.lvl).toFixed(1));
+  st.setAttribute('y2', Math.max(g.top, 330).toFixed(0)); st.setAttribute('opacity', running && frac > 0.002 ? '0.8' : '0');
+  el.querySelector('.sand-pile').setAttribute('d', sandPile(g)); }
 const TRAIL = [[170, 790], [320, 780], [450, 700], [600, 650], [690, 560], [800, 500], [880, 400], [960, 160]];
 const SEG = TRAIL.slice(1).map((p, i) => Math.hypot(p[0] - TRAIL[i][0], p[1] - TRAIL[i][1]));
 const TOTAL = SEG.reduce((a, b) => a + b, 0);
 const along = (t) => { let d = Math.min(Math.max(t, 0), 1) * TOTAL, pts = [TRAIL[0]];
   for (let i = 0; i < SEG.length; i++) { if (d <= SEG[i]) { const k = d / SEG[i], a = TRAIL[i], b = TRAIL[i + 1]; const p = [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k]; pts.push(p); return { p, pts }; } d -= SEG[i]; pts.push(TRAIL[i + 1]); }
   return { p: TRAIL[TRAIL.length - 1], pts }; };
-const bergSvg = (overall, n, slice) => { const me = along(overall); const pl = (ps) => ps.map((p) => p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' L');
+const pl = (ps) => ps.map((p) => p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' L');
+const bergSvg = (overall, n, slice) => { const me = along(overall);
   let camps = ''; for (let k = 1; k < n; k++) { const c = along(k / n).p, done = overall >= k / n;
     camps += `<circle cx="${c[0].toFixed(1)}" cy="${c[1].toFixed(1)}" r="7" fill="${done ? '#8DB5A2' : '#0F1A21'}" stroke="${done ? '#8DB5A2' : '#4C6A63'}" stroke-width="2"/><text x="${c[0].toFixed(1)}" y="${(c[1] + 32).toFixed(1)}" text-anchor="middle" font-family="Inter,sans-serif" font-size="13" fill="#8FA7A0">Lager ${k}</text>`; }
   const [x, y] = me.p;
@@ -484,10 +503,14 @@ const bergSvg = (overall, n, slice) => { const me = along(overall); const pl = (
   <path d="M0 900V680L210 560L340 590L560 420L660 460L960 150L1180 420L1260 380L1440 500V900Z" fill="#1A2E30"/>
   <path d="M960 150L912 214L938 206L960 222L984 204L1012 218Z" fill="#C9D6CF" opacity=".75"/>
   <path d="M${pl(TRAIL)}" fill="none" stroke="#33504D" stroke-width="2" stroke-dasharray="2 8" stroke-linecap="round"/>
-  <path d="M${pl(me.pts)}" fill="none" stroke="#8DB5A2" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path class="berg-done" d="M${pl(me.pts)}" fill="none" stroke="#8DB5A2" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
   ${camps}<path d="M960 160V112l26 9-26 9" fill="#E9B97A" stroke="#E9B97A" stroke-width="2" stroke-linejoin="round"/>
   <text x="1000" y="120" font-family="Inter,sans-serif" font-size="13" fill="#8FA7A0">Gipfel</text>
-  <g transform="translate(${x.toFixed(1)} ${y.toFixed(1)})"><circle cx="0" cy="-34" r="6" fill="#E9B97A"/><path d="M0 -27L-3 -10L-10 0M-3 -10L5 0M-1 -22L9 -16" fill="none" stroke="#E9B97A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><rect x="-12" y="-28" width="9" height="13" rx="3" fill="#B98C55"/><path d="M9 -16L14 2" stroke="#9FB4AD" stroke-width="1.5" stroke-linecap="round"/></g></svg>`; };
+  <g class="berg-me" transform="translate(${x.toFixed(1)} ${y.toFixed(1)})"><circle cx="0" cy="-34" r="6" fill="#E9B97A"/><path d="M0 -27L-3 -10L-10 0M-3 -10L5 0M-1 -22L9 -16" fill="none" stroke="#E9B97A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><rect x="-12" y="-28" width="9" height="13" rx="3" fill="#B98C55"/><path d="M9 -16L14 2" stroke="#9FB4AD" stroke-width="1.5" stroke-linecap="round"/></g></svg>`; };
+
+function updateBerg(el, overall) { const me = along(overall);
+  el.querySelector('.berg-done').setAttribute('d', 'M' + pl(me.pts));
+  el.querySelector('.berg-me').setAttribute('transform', `translate(${me.p[0].toFixed(1)} ${me.p[1].toFixed(1)})`); }
 
 /* ---------------- Einrichten ---------------- */
 function save() { store.set('settings', S); }
@@ -541,7 +564,7 @@ function renderSetup() {
   $('lg-f').textContent = `${S.sessions} × ${S.focus} min Fokus`;
   $('lg-p').textContent = S.sessions > 1 ? `${S.sessions - 1} × ${S.breakM} min Pause` : 'ohne Pause';
   const pv = { ring: () => `<div class="c-ring" style="width:190px"><svg viewBox="0 0 620 620" aria-hidden="true"><circle class="ring-track" cx="310" cy="310" r="262"/><circle class="ring-arc" cx="310" cy="310" r="262" stroke-dasharray="1100 1646" transform="rotate(-90 310 310)"/></svg><div class="inner"><span class="time" style="font-size:44px">${S.focus}:00</span></div></div>`,
-    sand: () => sandSvg(0.66, true), berg: () => bergSvg(0.3, S.sessions, false), digital: () => `<span class="time" style="font-size:76px">${S.focus}:00</span>` };
+    sand: () => sandSvg(0.66, true, 'sc-pv'), berg: () => bergSvg(0.3, S.sessions, false), digital: () => `<span class="time" style="font-size:76px">${S.focus}:00</span>` };
   $('pv').innerHTML = pv[S.style]();
   $('pv-cap').textContent = `${STYLE_NAMES[S.style]} · Session 1 von ${S.sessions}`;
 }
@@ -620,7 +643,7 @@ function begin(phase, idx) { const now = Date.now();
 function start() {
   ensureAudio();
   run = { cfg: { focus: S.focus, breakM: S.breakM, sessions: S.sessions, style: S.style, screens: S.screens, goal: S.goal }, log: [], phase: 'focus', idx: 0 };
-  begin('focus', 0);
+  begin('focus', 0); $('clock').dataset.key = '';
   if (S.screens === 2) launchDual(); else fullscreen(true);
   keepAwake();
   lastSec = -1; show(); tick();
@@ -689,16 +712,25 @@ function tick() {
     $('f-dots').innerHTML = dots(run);
     const dual = c.screens === 2;
     const overall = (run.idx + (1 - frac)) / c.sessions;
-    const el = $('clock'); el.className = 'clock';
-    if (c.style === 'ring') el.innerHTML = `<div class="c-ring">${ringSvg(frac)}<div class="inner">${pausedTag}<span class="time">${t}</span>${!dual && sub ? `<span class="sub">${sub}</span>` : ''}</div></div>`;
-    else if (c.style === 'sand') el.innerHTML = `<div class="c-sand">${sandSvg(frac, !run.paused)}<div class="col">${pausedTag}<span class="time">${t}</span><span class="sub">noch übrig von ${c.focus} Minuten</span>${!dual && sub ? `<span class="sub" style="color:#C9C3B3">${sub}</span>` : ''}</div></div>`;
-    else if (c.style === 'berg') { el.className = 'clock c-berg'; el.innerHTML = `${bergSvg(overall, c.sessions, true)}<div class="over">${pausedTag}<span class="time">${t}</span>${sub ? `<span class="sub">${sub}</span>` : ''}</div>`; }
-    else el.innerHTML = `<div class="c-dig">${pausedTag}<span class="time">${t}</span><div class="line"><b style="width:${((1 - frac) * 100).toFixed(2)}%"></b></div>${!dual && sub ? `<span class="sub">${sub}</span>` : ''}</div>`;
+    const el = $('clock'), key = [c.style, run.idx, run.paused, c.goal, dual].join('|');
+    if (el.dataset.key === key) {
+      setTime(el.querySelector('.time'), t);
+      if (c.style === 'ring') { const C = 2 * Math.PI * 262; el.querySelector('.ring-arc').setAttribute('stroke-dasharray', `${(C * frac).toFixed(1)} ${C.toFixed(1)}`); }
+      else if (c.style === 'sand') updateSand(el, frac, !run.paused);
+      else if (c.style === 'berg') updateBerg(el, overall);
+      else el.querySelector('.line b').style.width = ((1 - frac) * 100).toFixed(2) + '%';
+    } else {
+    el.dataset.key = key; el.className = 'clock';
+    if (c.style === 'ring') el.innerHTML = `<div class="c-ring">${ringSvg(frac)}<div class="inner">${pausedTag}<span class="time" data-t="${t}">${digitsHtml(t)}</span>${!dual && sub ? `<span class="sub">${sub}</span>` : ''}</div></div>`;
+    else if (c.style === 'sand') el.innerHTML = `<div class="c-sand">${sandSvg(frac, !run.paused)}<div class="col">${pausedTag}<span class="time" data-t="${t}">${digitsHtml(t)}</span><span class="sub">noch übrig von ${c.focus} Minuten</span>${!dual && sub ? `<span class="sub" style="color:#C9C3B3">${sub}</span>` : ''}</div></div>`;
+    else if (c.style === 'berg') { el.className = 'clock c-berg'; el.innerHTML = `${bergSvg(overall, c.sessions, true)}<div class="over">${pausedTag}<span class="time" data-t="${t}">${digitsHtml(t)}</span>${sub ? `<span class="sub">${sub}</span>` : ''}</div>`; }
+    else el.innerHTML = `<div class="c-dig">${pausedTag}<span class="time" data-t="${t}">${digitsHtml(t)}</span><div class="line"><b style="width:${((1 - frac) * 100).toFixed(2)}%"></b></div>${!dual && sub ? `<span class="sub">${sub}</span>` : ''}</div>`;
+    }
     const tg = $('b-toggle'); tg.setAttribute('aria-label', run.paused ? 'Fortsetzen' : 'Pausieren');
     tg.innerHTML = run.paused ? '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5l12 7-12 7z"/></svg>' : '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5v14M15 5v14"/></svg>';
     document.title = `${t} · Studytimer`;
   } else {
-    $('p-time').textContent = t; $('p-tag').textContent = run.paused ? 'Angehalten' : 'Pause';
+    setTime($('p-time'), t); $('p-tag').textContent = run.paused ? 'Angehalten' : 'Pause';
     $('p-top-l').textContent = `Pause nach Session ${run.idx + 1} von ${c.sessions}`;
     $('p-top-r').textContent = `Nächste Session: ${run.idx + 2} · ${c.focus} min`;
     $('p-dots').innerHTML = dots(run);
@@ -801,12 +833,12 @@ function initPlan() {
   drawTodos();
   const draw = () => {
     $('pl-wait').hidden = !!R;
-    if (!R || R.phase === 'done') { $('pl-time').textContent = '--:--'; $('pl-next').textContent = R ? 'Lernblock abgeschlossen' : '';
+    if (!R || R.phase === 'done') { setTime($('pl-time'), '--:--'); $('pl-next').textContent = R ? 'Lernblock abgeschlossen' : '';
       $('pl-phase').textContent = 'Ziel dieser Session'; $('pl-goal').textContent = R ? 'Gipfel erreicht.' : 'Wartet auf den Timer …'; if (!R) { $('tl').innerHTML = ''; } }
     if (!R) return;
     const now = Date.now() + off, c = R.cfg, ms = R.paused ? R.left : R.endAt - now;
     $('pl-time').classList.toggle('ringing', !!R.alarm);
-    if (R.phase !== 'done') { $('pl-time').textContent = R.alarm ? '00:00' : fmt(ms);
+    if (R.phase !== 'done') { setTime($('pl-time'), R.alarm ? '00:00' : fmt(ms));
       $('pl-next').textContent = R.alarm ? 'Zeit ist um' : R.paused ? 'Angehalten' : (R.phase === 'break' ? 'Weiter um ' : R.idx < c.sessions - 1 ? 'Pause um ' : 'Fertig um ') + clockAt(R.endAt - off);
       $('pl-phase').textContent = R.phase === 'break' ? 'Pause' : `Session ${R.idx + 1} von ${c.sessions}`;
       $('pl-goal').textContent = c.goal || 'Konzentriert lernen';
