@@ -573,10 +573,25 @@ $('vol').addEventListener('change', () => playSound());
 
 /* ---------------- Timer ---------------- */
 let audio = null;
-function ensureAudio() { try { audio = audio || new (window.AudioContext || window.webkitAudioContext)(); if (audio.state === 'suspended') audio.resume(); } catch { audio = null; } return audio; }
+function ensureAudio() {
+  try {
+    /* iPhone: Töne auch bei eingeschaltetem Lautlos-Schalter abspielen */
+    try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch {}
+    if (!audio || audio.state === 'closed') {
+      audio = new (window.AudioContext || window.webkitAudioContext)();
+      /* Safari gibt Web Audio erst frei, wenn im selben Klick ein Ton startet: ein stiller Puffer genügt */
+      const b = audio.createBuffer(1, 1, 22050), src = audio.createBufferSource(); src.buffer = b; src.connect(audio.destination); src.start(0);
+    }
+    if (audio.state !== 'running') audio.resume().catch(() => {});
+  } catch { audio = null; }
+  return audio;
+}
+['pointerdown', 'keydown', 'touchend'].forEach((ev) => document.addEventListener(ev, () => { if (audio && audio.state !== 'running') ensureAudio(); }, { passive: true }));
 /* Klänge werden synthetisch erzeugt: keine Audiodateien nötig */
 function playSound(kind) {
   kind = kind || S.sound; if (kind === 'off' || !ensureAudio()) return;
+  /* Ist der Audio-Kontext noch nicht bereit (Safari, Handy nach dem Sperren), erst nach dem Aufwachen planen */
+  if (audio.state !== 'running') { const k = kind; audio.resume().then(() => { if (audio.state === 'running') playSound(k); }).catch(() => {}); return; }
   const ctx = audio, t0 = ctx.currentTime + 0.05, master = ctx.createGain();
   if (playSound.last) { try { playSound.last.gain.setTargetAtTime(0, ctx.currentTime, 0.05); setTimeout(((g) => () => g.disconnect())(playSound.last), 400); } catch {} }
   playSound.last = master;
@@ -692,7 +707,7 @@ function tick() {
   broadcast();
 }
 setInterval(tick, 250);
-document.addEventListener('visibilitychange', () => { if (!document.hidden && run) { lastSec = -1; tick(); keepAwake(); } });
+document.addEventListener('visibilitychange', () => { if (!document.hidden && audio && audio.state !== 'running') audio.resume().catch(() => {}); if (!document.hidden && run) { lastSec = -1; tick(); keepAwake(); } });
 
 $('b-toggle').onclick = togglePause;
 $('b-skip').onclick = () => advance(true);
