@@ -219,10 +219,6 @@ kbd{font-family:var(--body);font-size:12px;padding:2px 6px;border:1px solid var(
 .fs-banner{grid-column:1/-1;justify-self:center;height:44px;padding:0 20px;border-radius:22px;border:1px dashed var(--f-line);background:transparent;color:#B8C9C3;font-size:14px}
 .vol{display:flex;align-items:center;gap:14px;font-size:14px;color:var(--muted)}
 .vol input{flex:1;max-width:260px;accent-color:var(--accent)}
-.music-row{display:flex;gap:10px;flex-wrap:wrap}
-.music-row input{flex:1 1 260px;min-width:0}
-.hint-s{font-size:13px;line-height:1.5;color:var(--muted)}
-.hint-s.err{color:#B4442E}
 
 /* Alarm: Zeit ist um */
 .alarm{position:fixed;inset:0;z-index:15;--al-c:var(--f-accent);background:radial-gradient(circle at 50% 46%,color-mix(in srgb,var(--al-c) 16%,transparent),transparent 62%),var(--f-bg);color:var(--f-ink);color-scheme:dark;display:flex;align-items:center;justify-content:center;overflow:hidden}
@@ -249,28 +245,6 @@ kbd{font-family:var(--body);font-size:12px;padding:2px 6px;border:1px solid var(
 @keyframes al-grow{from{transform:scale(.45);opacity:0;filter:blur(6px)}60%{opacity:1;filter:blur(0)}to{transform:scale(1);opacity:1}}
 @keyframes al-buzz{0%,13%,100%{transform:translate(0,0) rotate(0)}1.5%{transform:translate(-6px,0) rotate(-1.4deg)}3%{transform:translate(6px,0) rotate(1.4deg)}4.5%{transform:translate(-5px,0) rotate(-1deg)}6%{transform:translate(5px,0) rotate(1deg)}7.5%{transform:translate(-3px,0) rotate(-.5deg)}9%{transform:translate(3px,0) rotate(.5deg)}10.5%{transform:translate(-1px,0)}12%{transform:translate(1px,0)}}
 @keyframes al-ripple{from{transform:scale(.35);opacity:.55}to{transform:scale(1.35);opacity:0}}
-
-/* Musik-Dock */
-.music{position:fixed;z-index:18;right:max(24px,env(safe-area-inset-right,0px));bottom:calc(24px + env(safe-area-inset-bottom,0px));width:min(380px,calc(100% - 32px));box-sizing:border-box;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:12px;display:flex;flex-direction:column;gap:10px;box-shadow:0 12px 32px rgba(16,25,28,.18);transition:opacity .3s,transform .3s,visibility .3s}
-.music:not(.open){visibility:hidden;opacity:0;transform:translateY(12px);pointer-events:none}
-body.in-stage .music{bottom:calc(100px + env(safe-area-inset-bottom,0px));background:#152124;border-color:var(--f-line);color:var(--f-ink);color-scheme:dark}
-@media (min-width:700px){body.notes-open .music{right:444px}}
-.music-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-left:6px}
-.music-head .label{margin:0}
-body.in-stage .music .label{color:var(--f-muted)}
-.music-x{width:40px;height:40px;border-radius:20px;border:0;background:transparent;color:inherit;display:flex;align-items:center;justify-content:center}
-.music-x svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8}
-.music-frame{display:flex;flex-direction:column;gap:10px}
-.music-frame iframe{display:block;width:100%;height:152px;border:0;border-radius:12px}
-.music-fallback{font-size:14px;line-height:1.5;padding:4px 6px 6px}
-.music-fallback a{font-weight:500}
-body.in-stage .music-fallback a{color:var(--f-accent)}
-.music-links{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-.music-links a{display:inline-flex;align-items:center;height:40px;padding:0 16px;border-radius:20px;border:1px solid var(--line);color:inherit;text-decoration:none;font-size:13px;font-weight:500}
-.music-links a.main{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
-body.in-stage .music-links a{border-color:var(--f-line)}
-body.in-stage .music-links a.main{background:var(--f-accent);border-color:var(--f-accent);color:#10191C}
-.music-note{font-size:12px;line-height:1.45;opacity:.75;padding:0 4px 2px}
 .wait{color:var(--f-muted);font-size:15px;line-height:1.6;max-width:56ch}
 </style>
 </head>
@@ -329,11 +303,6 @@ body.in-stage .music-links a.main{background:var(--f-accent);border-color:var(--
         <div class="pills" id="sounds"></div>
         <div class="vol"><label for="vol">Lautstärke</label><input type="range" id="vol" min="0" max="1" step="0.05"></div>
       </fieldset>
-      <div class="field">
-        <label class="flabel" for="pl-url">Musik von Spotify</label>
-        <div class="music-row"><input class="text-in" id="pl-url" inputmode="url" placeholder="Link zu einer Spotify-Playlist"><button class="btn-ghost" id="music-open">Player öffnen</button></div>
-        <span class="hint-s" id="pl-hint">Standard ist «This Is Hans Zimmer». Eigene Playlist: in Spotify auf Teilen › Link kopieren und hier einfügen. Ganze Songs spielt der eingebettete Player nur, wenn der Browser ihm dein Spotify-Login zeigt. Safari blockiert das. Dann einfach «In der Spotify-App abspielen» wählen.</span>
-      </div>
     </section>
 
     <aside class="side" aria-labelledby="pv-h">
@@ -348,7 +317,7 @@ body.in-stage .music-links a.main{background:var(--f-accent);border-color:var(--
         <label class="label" for="notes-setup">Notizen</label>
         <textarea class="notes-field setup-notes" id="notes-setup" placeholder="Gedanken, Fragen, To-dos für später …"></textarea>
       </div>
-      <p class="hint">Im Timer: <kbd>Leertaste</kbd> pausiert, <kbd>N</kbd> öffnet Notizen, <kbd>M</kbd> die Musik, <kbd>F</kbd> schaltet Vollbild, <kbd>Esc</kbd> verlässt es. Einstellungen, Favoriten und Notizen bleiben in diesem Browser gespeichert.</p>
+      <p class="hint">Im Timer: <kbd>Leertaste</kbd> pausiert, <kbd>N</kbd> öffnet Notizen, <kbd>F</kbd> schaltet Vollbild, <kbd>Esc</kbd> verlässt es. Einstellungen, Favoriten und Notizen bleiben in diesem Browser gespeichert.</p>
     </aside>
   </div>
 </main>
@@ -362,7 +331,6 @@ body.in-stage .music-links a.main{background:var(--f-accent);border-color:var(--
     <div class="dots" id="f-dots"></div>
     <div class="ctrls">
       <button class="ic" id="plan-open" hidden aria-label="Plan-Fenster öffnen"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="8" height="12" rx="1.5"/><rect x="13" y="5" width="8" height="12" rx="1.5"/></svg></button>
-      <button class="ic" id="b-music" aria-label="Musik" aria-expanded="false" aria-controls="music"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg></button>
       <button class="ic" id="b-notes" aria-label="Notizen" aria-expanded="false" aria-controls="drawer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13 7l4 4"/></svg></button>
       <button class="ic" id="b-toggle" aria-label="Pausieren"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5v14M15 5v14"/></svg></button>
       <button class="ic" id="b-skip" aria-label="Session beenden und zur Pause"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5l9 7-9 7zM18 5v14"/></svg></button>
@@ -384,7 +352,6 @@ body.in-stage .music-links a.main{background:var(--f-accent);border-color:var(--
   <div class="stage-bottom">
     <div class="dots" id="p-dots"></div>
     <div class="ctrls" style="flex-wrap:wrap">
-      <button class="p-btn" id="p-music" aria-expanded="false" aria-controls="music">Musik</button>
       <button class="p-btn" id="p-notes" aria-expanded="false" aria-controls="drawer">Notizen</button>
       <button class="p-btn" id="p-add">+ 5 min</button>
       <button class="p-btn main" id="p-end">Pause beenden</button>
@@ -414,12 +381,6 @@ body.in-stage .music-links a.main{background:var(--f-accent);border-color:var(--
     <span class="al-hint">Leertaste bestätigt</span>
   </div>
 </section>
-
-<!-- ===== Musik ===== -->
-<aside id="music" class="music" aria-label="Musik">
-  <div class="music-head"><span class="label">Musik</span><button class="music-x" id="music-close" aria-label="Player ausblenden – Musik läuft weiter"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button></div>
-  <div class="music-frame" id="music-frame"></div>
-</aside>
 
 <!-- ===== Notizen (1 Monitor) ===== -->
 <aside id="drawer" class="drawer" hidden aria-label="Notizen">
@@ -476,9 +437,8 @@ const DEFAULT_FAVS = [
   { id: 'c', name: 'Prüfungsphase', focus: 90, breakM: 15, sessions: 2, style: 'berg' },
   { id: 'd', name: 'Vokabeln', focus: 15, breakM: 3, sessions: 6, style: 'digital' }
 ];
-const DEFAULT_PLAYLIST = 'https://open.spotify.com/playlist/37i9dQZF1DWWF3yivn1m3D';
-const EMBED_OK = true;
-let S = Object.assign({ focus: 50, breakM: 10, sessions: 3, style: 'ring', screens: 1, goal: '', sound: 'bells', volume: 0.7, playlist: DEFAULT_PLAYLIST }, store.get('settings', {}));
+let S = Object.assign({ focus: 50, breakM: 10, sessions: 3, style: 'ring', screens: 1, goal: '', sound: 'bells', volume: 0.7 }, store.get('settings', {}));
+delete S.playlist;
 if (typeof S.sound === 'boolean') S.sound = S.sound ? 'bells' : 'off';
 const SOUND_NAMES = { bells: 'Glocken', bowl: 'Klangschale', marimba: 'Marimba', off: 'Aus' };
 let favs = store.get('favs', DEFAULT_FAVS);
@@ -535,9 +495,9 @@ function dualNote() {
   const planUrl = esc(location.href.split('#')[0] + '#plan');
   const others = screenDetails ? screenDetails.screens.length : 0;
   let t = {
-    unsupported: '<b>Safari und Firefox</b> erlauben Websites nicht, Fenster auf einen anderen Monitor zu legen – das kann keine Website umgehen. So geht es trotzdem bequem: Beim ersten Start das Plan-Fenster auf den zweiten Monitor ziehen und mit dem grünen Knopf oben links auf Vollbild schalten. Danach bleibt es dort für alle weiteren Lernblöcke, bis du das Uhr-Fenster schliesst. <b>Chrome und Edge</b> platzieren es automatisch.',
+    unsupported: '',
     ask: 'Damit Uhr und Plan automatisch auf zwei Monitoren erscheinen, braucht der Browser einmalig deine Erlaubnis zur Fensterverwaltung.<div class="row"><button class="btn-ghost" data-act="screens">Bildschirme erkennen</button></div>',
-    denied: 'Die Erlaubnis zur Fensterverwaltung ist blockiert. Erlaube sie in den Website-Einstellungen (Symbol links in der Adresszeile) – oder zieh das Plan-Fenster nach dem Start selbst hinüber.<div class="row"><button class="btn-ghost" data-act="screens">Erneut versuchen</button></div>',
+    denied: '',
     granted: others >= 2 ? `<b>Bereit.</b> Die Uhr läuft im Vollbild auf diesem Monitor, Ablauf und Notizen öffnen sich auf «${esc((screenDetails.screens.find((x) => x !== screenDetails.currentScreen) || {}).label || 'zweiter Monitor')}».`
       : '<b>Nur ein Monitor erkannt.</b> Schliess den zweiten Monitor an – oder wähle «1 Monitor».<div class="row"><button class="btn-ghost" data-act="screens">Erneut prüfen</button></div>',
     unknown: 'Bildschirme werden geprüft …'
@@ -569,12 +529,11 @@ function renderSetup() {
     digital: '<text x="22" y="28" text-anchor="middle" font-family="Fraunces,serif" font-size="16" style="fill:var(--accent);stroke:none">25:00</text>' };
   $('styles').innerHTML = Object.keys(STYLE_NAMES).map((k) => `<button class="opt" data-style="${k}" aria-pressed="${S.style === k}"><svg width="44" height="44" viewBox="0 0 44 44" aria-hidden="true">${icons[k]}</svg>${STYLE_NAMES[k]}</button>`).join('');
   document.querySelectorAll('.mon').forEach((b) => b.setAttribute('aria-pressed', String(+b.dataset.screens === S.screens)));
-  $('dual-note').hidden = S.screens !== 2;
   $('dual-note').innerHTML = dualNote();
+  $('dual-note').hidden = S.screens !== 2 || !$('dual-note').innerHTML;
   $('goal').value !== S.goal && ($('goal').value = S.goal);
   $('sounds').innerHTML = Object.keys(SOUND_NAMES).map((k) => `<button class="pill" data-snd="${k}" aria-pressed="${S.sound === k}">${SOUND_NAMES[k]}</button>`).join('');
   $('vol').value = S.volume; $('vol').disabled = S.sound === 'off';
-  if (document.activeElement !== $('pl-url')) $('pl-url').value = S.playlist;
   const total = S.sessions * S.focus + (S.sessions - 1) * S.breakM;
   $('summary').textContent = `Gesamt ${dur(total)} · Ende ca. ${clockAt(Date.now() + total * 60000)}`;
   let bar = ''; for (let i = 0; i < S.sessions; i++) { bar += `<span style="flex:${S.focus};height:14px;background:${i ? '#9FC2B3' : 'var(--accent)'}"></span>`; if (i < S.sessions - 1) bar += `<span style="flex:${S.breakM};height:8px;background:#E3D6B4"></span>`; }
@@ -611,11 +570,6 @@ $('save-form').addEventListener('submit', (e) => { e.preventDefault();
 $('goal').addEventListener('input', (e) => { S.goal = e.target.value; save(); });
 $('vol').addEventListener('input', (e) => { S.volume = +e.target.value; save(); });
 $('vol').addEventListener('change', () => playSound());
-$('pl-url').addEventListener('change', (e) => { const v = e.target.value.trim() || DEFAULT_PLAYLIST, ok = spotifyEmbed(v);
-  $('pl-hint').classList.toggle('err', !ok);
-  if (!ok) { $('pl-hint').textContent = 'Das ist kein Spotify-Link. Kopiere ihn in Spotify über Teilen › Link kopieren.'; return; }
-  $('pl-hint').textContent = 'Gespeichert. Der Player spielt jetzt diese Playlist.'; S.playlist = v; save(); loadMusic(true); });
-$('music-open').addEventListener('click', () => toggleMusic(true));
 
 /* ---------------- Timer ---------------- */
 let audio = null;
@@ -747,26 +701,6 @@ $('plan-open').onclick = openPlan;
 $('al-go').onclick = () => advance(true);
 $('al-more').onclick = addFive;
 
-/* ---------------- Musik (Spotify) ---------------- */
-function spotifyEmbed(v) { const m = String(v).match(/(playlist|album|artist|track|show|episode)[/:]([A-Za-z0-9]{22})/);
-  return m ? { url: `https://open.spotify.com/embed/${m[1]}/${m[2]}?utm_source=generator&theme=0`, open: `https://open.spotify.com/${m[1]}/${m[2]}`, app: `spotify:${m[1]}:${m[2]}` } : null; }
-function loadMusic(force) {
-  const box = $('music-frame'), e = spotifyEmbed(S.playlist) || spotifyEmbed(DEFAULT_PLAYLIST);
-  if (!EMBED_OK) { box.innerHTML = `<p class="music-fallback">Spotify lässt sich in dieser Vorschau nicht einbetten. Auf deiner Studytimer-Website läuft der Player direkt hier.<br><a href="${e.open}" target="_blank" rel="noopener">Playlist in Spotify öffnen</a></p>`; return; }
-  const f = box.querySelector('iframe');
-  if (f && !force) return;
-  const links = `<div class="music-links"><a class="main" href="${e.app}">In der Spotify-App abspielen</a><a href="${e.open}" target="_blank" rel="noopener">Web-Player</a></div>
-    <p class="music-note">Spielt der Player hier nur 30-Sekunden-Ausschnitte, blockiert der Browser das Spotify-Login im eingebetteten Player. Die App spielt alles.</p>`;
-  if (f) { f.src = e.url; box.querySelector('.music-links').outerHTML = links.split('\n')[0]; return; }
-  box.innerHTML = `<iframe title="Spotify-Player" src="${e.url}" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture; storage-access" loading="lazy"></iframe>${links}`;
-}
-function toggleMusic(open) { const m = $('music'), o = open ?? !m.classList.contains('open');
-  if (o) loadMusic(false); m.classList.toggle('open', o);
-  ['b-music', 'p-music'].forEach((id) => $(id).setAttribute('aria-expanded', String(o))); $('b-music').classList.toggle('on', o); }
-$('b-music').onclick = () => toggleMusic();
-$('p-music').onclick = () => toggleMusic();
-$('music-close').onclick = () => toggleMusic(false);
-
 /* ---------------- Notizen (in allen Ansichten und Fenstern dieselben) ---------------- */
 function syncNotes(src) { const v = src ? src.value : store.get('notes', '');
   document.querySelectorAll('.notes-field').forEach((t) => { if (t !== src && t.value !== v) t.value = v; }); }
@@ -790,7 +724,6 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'f' || e.key === 'F') { e.preventDefault(); fullscreen(); }
   else if ((e.code === 'Space' || e.key === 'Enter') && run && run.alarm && !isPlan) { e.preventDefault(); advance(true); }
   else if (e.code === 'Space' && run && !isPlan) { e.preventDefault(); togglePause(); }
-  else if ((e.key === 'm' || e.key === 'M') && !isPlan) { e.preventDefault(); toggleMusic(); }
   else if ((e.key === 'n' || e.key === 'N') && run && !isPlan && run.phase !== 'done') { e.preventDefault(); toggleNotes(); }
 });
 
@@ -817,8 +750,7 @@ function launchDual() {
     /* Ohne Erlaubnis darf ein Klick nur eines von beiden: zuerst das Plan-Fenster öffnen */
     const had = planWin && !planWin.closed;
     if (had) { openPlanWindow(); fullscreen(true); }
-    else if (openPlanWindow()) toast('Zieh das Plan-Fenster auf deinen zweiten Monitor und schalte es dort auf Vollbild. Es bleibt da für alle weiteren Lernblöcke. Danach hier F drücken.', 16000);
-    else toast('Das Plan-Fenster wurde blockiert. Erlaube Pop-ups für diese Seite und klicke dann unten auf das Fenster-Symbol.');
+    else if (!openPlanWindow()) toast('Das Plan-Fenster wurde blockiert. Erlaube Pop-ups für diese Seite und klicke dann unten auf das Fenster-Symbol.');
   }
 }
 function openPlan() { if (planWin && !planWin.closed) { try { planWin.focus(); } catch {} return; } openPlanWindow(); }
@@ -878,7 +810,6 @@ function initPlan() {
       if (m.type === 'state') { if (!mainId) mainId = m.id; R = m.run; off = m.now - Date.now(); draw(); }
       else if (m.type === 'bye') ended(); };
     bc.postMessage({ type: 'hello', id: mainId }); }
-  else { $('pl-wait').textContent = 'Dieser Browser unterstützt keine Synchronisation zwischen Fenstern. Nutze einen aktuellen Chrome, Edge, Firefox oder Safari.'; }
   setInterval(draw, 1000); draw();
 }
 
