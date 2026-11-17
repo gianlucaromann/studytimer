@@ -260,10 +260,17 @@ body.in-stage .music{bottom:calc(100px + env(safe-area-inset-bottom,0px));backgr
 body.in-stage .music .label{color:var(--f-muted)}
 .music-x{width:40px;height:40px;border-radius:20px;border:0;background:transparent;color:inherit;display:flex;align-items:center;justify-content:center}
 .music-x svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8}
+.music-frame{display:flex;flex-direction:column;gap:10px}
 .music-frame iframe{display:block;width:100%;height:152px;border:0;border-radius:12px}
 .music-fallback{font-size:14px;line-height:1.5;padding:4px 6px 6px}
 .music-fallback a{font-weight:500}
 body.in-stage .music-fallback a{color:var(--f-accent)}
+.music-links{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.music-links a{display:inline-flex;align-items:center;height:40px;padding:0 16px;border-radius:20px;border:1px solid var(--line);color:inherit;text-decoration:none;font-size:13px;font-weight:500}
+.music-links a.main{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+body.in-stage .music-links a{border-color:var(--f-line)}
+body.in-stage .music-links a.main{background:var(--f-accent);border-color:var(--f-accent);color:#10191C}
+.music-note{font-size:12px;line-height:1.45;opacity:.75;padding:0 4px 2px}
 .wait{color:var(--f-muted);font-size:15px;line-height:1.6;max-width:56ch}
 </style>
 </head>
@@ -325,7 +332,7 @@ body.in-stage .music-fallback a{color:var(--f-accent)}
       <div class="field">
         <label class="flabel" for="pl-url">Musik von Spotify</label>
         <div class="music-row"><input class="text-in" id="pl-url" inputmode="url" placeholder="Link zu einer Spotify-Playlist"><button class="btn-ghost" id="music-open">Player öffnen</button></div>
-        <span class="hint-s" id="pl-hint">Standard ist «This Is Hans Zimmer». Eigene Playlist: in Spotify auf Teilen › Link kopieren und hier einfügen. Ganze Songs gibt es, wenn du im Browser bei Spotify angemeldet bist.</span>
+        <span class="hint-s" id="pl-hint">Standard ist «This Is Hans Zimmer». Eigene Playlist: in Spotify auf Teilen › Link kopieren und hier einfügen. Ganze Songs spielt der eingebettete Player nur, wenn der Browser ihm dein Spotify-Login zeigt. Safari blockiert das. Dann einfach «In der Spotify-App abspielen» wählen.</span>
       </div>
     </section>
 
@@ -742,14 +749,16 @@ $('al-more').onclick = addFive;
 
 /* ---------------- Musik (Spotify) ---------------- */
 function spotifyEmbed(v) { const m = String(v).match(/(playlist|album|artist|track|show|episode)[/:]([A-Za-z0-9]{22})/);
-  return m ? { url: `https://open.spotify.com/embed/${m[1]}/${m[2]}?utm_source=generator&theme=0`, open: `https://open.spotify.com/${m[1]}/${m[2]}` } : null; }
+  return m ? { url: `https://open.spotify.com/embed/${m[1]}/${m[2]}?utm_source=generator&theme=0`, open: `https://open.spotify.com/${m[1]}/${m[2]}`, app: `spotify:${m[1]}:${m[2]}` } : null; }
 function loadMusic(force) {
   const box = $('music-frame'), e = spotifyEmbed(S.playlist) || spotifyEmbed(DEFAULT_PLAYLIST);
   if (!EMBED_OK) { box.innerHTML = `<p class="music-fallback">Spotify lässt sich in dieser Vorschau nicht einbetten. Auf deiner Studytimer-Website läuft der Player direkt hier.<br><a href="${e.open}" target="_blank" rel="noopener">Playlist in Spotify öffnen</a></p>`; return; }
   const f = box.querySelector('iframe');
   if (f && !force) return;
-  if (f) { f.src = e.url; return; }
-  box.innerHTML = `<iframe title="Spotify-Player" src="${e.url}" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>`;
+  const links = `<div class="music-links"><a class="main" href="${e.app}">In der Spotify-App abspielen</a><a href="${e.open}" target="_blank" rel="noopener">Web-Player</a></div>
+    <p class="music-note">Spielt der Player hier nur 30-Sekunden-Ausschnitte, blockiert der Browser das Spotify-Login im eingebetteten Player. Die App spielt alles.</p>`;
+  if (f) { f.src = e.url; box.querySelector('.music-links').outerHTML = links.split('\n')[0]; return; }
+  box.innerHTML = `<iframe title="Spotify-Player" src="${e.url}" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture; storage-access" loading="lazy"></iframe>${links}`;
 }
 function toggleMusic(open) { const m = $('music'), o = open ?? !m.classList.contains('open');
   if (o) loadMusic(false); m.classList.toggle('open', o);
