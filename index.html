@@ -208,6 +208,53 @@ kbd{font-family:var(--body);font-size:12px;padding:2px 6px;border:1px solid var(
 .notice b{color:var(--ink);font-weight:600}
 .toast{position:absolute;z-index:3;top:calc(84px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);max-width:min(560px,calc(100% - 32px));box-sizing:border-box;background:#18262A;border:1px solid var(--f-line);color:var(--f-ink);border-radius:12px;padding:12px 18px;font-size:14px;line-height:1.5;text-align:center}
 .fs-banner{grid-column:1/-1;justify-self:center;height:44px;padding:0 20px;border-radius:22px;border:1px dashed var(--f-line);background:transparent;color:#B8C9C3;font-size:14px}
+.vol{display:flex;align-items:center;gap:14px;font-size:14px;color:var(--muted)}
+.vol input{flex:1;max-width:260px;accent-color:var(--accent)}
+.music-row{display:flex;gap:10px;flex-wrap:wrap}
+.music-row input{flex:1 1 260px;min-width:0}
+.hint-s{font-size:13px;line-height:1.5;color:var(--muted)}
+.hint-s.err{color:#B4442E}
+
+/* Alarm: Zeit ist um */
+.alarm{position:fixed;inset:0;z-index:15;--al-c:var(--f-accent);background:radial-gradient(circle at 50% 46%,color-mix(in srgb,var(--al-c) 16%,transparent),transparent 62%),var(--f-bg);color:var(--f-ink);color-scheme:dark;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.alarm.al-break{--al-c:var(--warm)}
+.al-ripples{position:absolute;left:50%;top:50%;width:min(64vmin,600px);aspect-ratio:1;transform:translate(-50%,-50%);pointer-events:none}
+.al-ripples i{position:absolute;inset:0;border-radius:50%;border:2px solid var(--al-c);opacity:.18}
+.al-core{position:relative;display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center;padding:0 16px}
+.al-kicker{font-size:13px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--al-c)}
+.al-grow{display:block;position:relative}
+.al-time{position:relative;display:block;font-size:min(26vw,32vh,300px);color:var(--f-ink)}
+.alarm h1{margin:6px 0 0;font-family:var(--display);font-weight:400;font-size:clamp(26px,3.2vw,40px)}
+.alarm p{margin:0;color:var(--f-muted);font-size:16px}
+.al-btns{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:18px}
+.al-btn{height:52px;padding:0 26px;border-radius:26px;border:1px solid var(--f-line);background:transparent;color:#C9D6CF;font-size:15px}
+.al-btn.main{background:var(--al-c);border-color:var(--al-c);color:#10191C;font-weight:600}
+.al-hint{font-size:13px;color:var(--f-muted);margin-top:4px}
+@media (prefers-reduced-motion:no-preference){
+  .al-grow{animation:al-grow 1.1s cubic-bezier(.2,.9,.25,1) both}
+  .al-time{animation:al-buzz 4.5s 1.3s ease-in-out infinite}
+  .al-ripples i{opacity:0;animation:al-ripple 4.2s cubic-bezier(.2,.6,.3,1) infinite}
+  .al-ripples i:nth-child(2){animation-delay:1.4s}.al-ripples i:nth-child(3){animation-delay:2.8s}
+  .ringing{animation:al-buzz 4.5s ease-in-out infinite}
+}
+@keyframes al-grow{from{transform:scale(.45);opacity:0;filter:blur(6px)}60%{opacity:1;filter:blur(0)}to{transform:scale(1);opacity:1}}
+@keyframes al-buzz{0%,13%,100%{transform:translate(0,0) rotate(0)}1.5%{transform:translate(-6px,0) rotate(-1.4deg)}3%{transform:translate(6px,0) rotate(1.4deg)}4.5%{transform:translate(-5px,0) rotate(-1deg)}6%{transform:translate(5px,0) rotate(1deg)}7.5%{transform:translate(-3px,0) rotate(-.5deg)}9%{transform:translate(3px,0) rotate(.5deg)}10.5%{transform:translate(-1px,0)}12%{transform:translate(1px,0)}}
+@keyframes al-ripple{from{transform:scale(.35);opacity:.55}to{transform:scale(1.35);opacity:0}}
+
+/* Musik-Dock */
+.music{position:fixed;z-index:18;right:max(24px,env(safe-area-inset-right,0px));bottom:calc(24px + env(safe-area-inset-bottom,0px));width:min(380px,calc(100% - 32px));box-sizing:border-box;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:12px;display:flex;flex-direction:column;gap:10px;box-shadow:0 12px 32px rgba(16,25,28,.18);transition:opacity .3s,transform .3s,visibility .3s}
+.music:not(.open){visibility:hidden;opacity:0;transform:translateY(12px);pointer-events:none}
+body.in-stage .music{bottom:calc(100px + env(safe-area-inset-bottom,0px));background:#152124;border-color:var(--f-line);color:var(--f-ink);color-scheme:dark}
+@media (min-width:700px){body.notes-open .music{right:444px}}
+.music-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-left:6px}
+.music-head .label{margin:0}
+body.in-stage .music .label{color:var(--f-muted)}
+.music-x{width:40px;height:40px;border-radius:20px;border:0;background:transparent;color:inherit;display:flex;align-items:center;justify-content:center}
+.music-x svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8}
+.music-frame iframe{display:block;width:100%;height:152px;border:0;border-radius:12px}
+.music-fallback{font-size:14px;line-height:1.5;padding:4px 6px 6px}
+.music-fallback a{font-weight:500}
+body.in-stage .music-fallback a{color:var(--f-accent)}
 .wait{color:var(--f-muted);font-size:15px;line-height:1.6;max-width:56ch}
 </style>
 </head>
@@ -262,7 +309,15 @@ kbd{font-family:var(--body);font-size:12px;padding:2px 6px;border:1px solid var(
         </div>
         <div class="notice" id="dual-note" hidden></div>
       </fieldset>
-      <label class="switch" for="sound"><input type="checkbox" id="sound"> Leiser Gong am Ende jeder Phase</label>
+      <fieldset class="field"><legend>Timer-Klang</legend>
+        <div class="pills" id="sounds"></div>
+        <div class="vol"><label for="vol">Lautstärke</label><input type="range" id="vol" min="0" max="1" step="0.05"></div>
+      </fieldset>
+      <div class="field">
+        <label class="flabel" for="pl-url">Musik von Spotify</label>
+        <div class="music-row"><input class="text-in" id="pl-url" inputmode="url" placeholder="Link zu einer Spotify-Playlist"><button class="btn-ghost" id="music-open">Player öffnen</button></div>
+        <span class="hint-s" id="pl-hint">Standard ist «This Is Hans Zimmer». Eigene Playlist: in Spotify auf Teilen › Link kopieren und hier einfügen. Ganze Songs gibt es, wenn du im Browser bei Spotify angemeldet bist.</span>
+      </div>
     </section>
 
     <aside class="side" aria-labelledby="pv-h">
@@ -277,7 +332,7 @@ kbd{font-family:var(--body);font-size:12px;padding:2px 6px;border:1px solid var(
         <label class="label" for="notes-setup">Notizen</label>
         <textarea class="notes-field setup-notes" id="notes-setup" placeholder="Gedanken, Fragen, To-dos für später …"></textarea>
       </div>
-      <p class="hint">Im Timer: <kbd>Leertaste</kbd> pausiert, <kbd>N</kbd> öffnet Notizen, <kbd>F</kbd> schaltet Vollbild, <kbd>Esc</kbd> verlässt es. Einstellungen, Favoriten und Notizen bleiben in diesem Browser gespeichert.</p>
+      <p class="hint">Im Timer: <kbd>Leertaste</kbd> pausiert, <kbd>N</kbd> öffnet Notizen, <kbd>M</kbd> die Musik, <kbd>F</kbd> schaltet Vollbild, <kbd>Esc</kbd> verlässt es. Einstellungen, Favoriten und Notizen bleiben in diesem Browser gespeichert.</p>
     </aside>
   </div>
 </main>
@@ -291,6 +346,7 @@ kbd{font-family:var(--body);font-size:12px;padding:2px 6px;border:1px solid var(
     <div class="dots" id="f-dots"></div>
     <div class="ctrls">
       <button class="ic" id="plan-open" hidden aria-label="Plan-Fenster öffnen"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="8" height="12" rx="1.5"/><rect x="13" y="5" width="8" height="12" rx="1.5"/></svg></button>
+      <button class="ic" id="b-music" aria-label="Musik" aria-expanded="false" aria-controls="music"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg></button>
       <button class="ic" id="b-notes" aria-label="Notizen" aria-expanded="false" aria-controls="drawer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13 7l4 4"/></svg></button>
       <button class="ic" id="b-toggle" aria-label="Pausieren"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5v14M15 5v14"/></svg></button>
       <button class="ic" id="b-skip" aria-label="Session beenden und zur Pause"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5l9 7-9 7zM18 5v14"/></svg></button>
@@ -312,6 +368,7 @@ kbd{font-family:var(--body);font-size:12px;padding:2px 6px;border:1px solid var(
   <div class="stage-bottom">
     <div class="dots" id="p-dots"></div>
     <div class="ctrls" style="flex-wrap:wrap">
+      <button class="p-btn" id="p-music" aria-expanded="false" aria-controls="music">Musik</button>
       <button class="p-btn" id="p-notes" aria-expanded="false" aria-controls="drawer">Notizen</button>
       <button class="p-btn" id="p-add">+ 5 min</button>
       <button class="p-btn main" id="p-end">Pause beenden</button>
@@ -329,6 +386,24 @@ kbd{font-family:var(--body);font-size:12px;padding:2px 6px;border:1px solid var(
     <button class="d-btn main" id="done-back">Zurück zur Übersicht</button>
   </div></div>
 </section>
+
+<!-- ===== Alarm ===== -->
+<section id="alarm" class="alarm" hidden role="alertdialog" aria-modal="true" aria-labelledby="al-title" aria-describedby="al-sub">
+  <div class="al-core">
+    <span class="al-kicker" id="al-kicker"></span>
+    <span class="al-grow"><span class="al-ripples" aria-hidden="true"><i></i><i></i><i></i></span><span class="time al-time">00:00</span></span>
+    <h1 id="al-title"></h1>
+    <p id="al-sub"></p>
+    <div class="al-btns"><button class="al-btn" id="al-more"></button><button class="al-btn main" id="al-go"></button></div>
+    <span class="al-hint">Leertaste bestätigt</span>
+  </div>
+</section>
+
+<!-- ===== Musik ===== -->
+<aside id="music" class="music" aria-label="Musik">
+  <div class="music-head"><span class="label">Musik</span><button class="music-x" id="music-close" aria-label="Player ausblenden – Musik läuft weiter"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button></div>
+  <div class="music-frame" id="music-frame"></div>
+</aside>
 
 <!-- ===== Notizen (1 Monitor) ===== -->
 <aside id="drawer" class="drawer" hidden aria-label="Notizen">
@@ -385,7 +460,11 @@ const DEFAULT_FAVS = [
   { id: 'c', name: 'Prüfungsphase', focus: 90, breakM: 15, sessions: 2, style: 'berg' },
   { id: 'd', name: 'Vokabeln', focus: 15, breakM: 3, sessions: 6, style: 'digital' }
 ];
-let S = Object.assign({ focus: 50, breakM: 10, sessions: 3, style: 'ring', screens: 1, goal: '', sound: true }, store.get('settings', {}));
+const DEFAULT_PLAYLIST = 'https://open.spotify.com/playlist/37i9dQZF1DWWF3yivn1m3D';
+const EMBED_OK = true;
+let S = Object.assign({ focus: 50, breakM: 10, sessions: 3, style: 'ring', screens: 1, goal: '', sound: 'bells', volume: 0.7, playlist: DEFAULT_PLAYLIST }, store.get('settings', {}));
+if (typeof S.sound === 'boolean') S.sound = S.sound ? 'bells' : 'off';
+const SOUND_NAMES = { bells: 'Glocken', bowl: 'Klangschale', marimba: 'Marimba', off: 'Aus' };
 let favs = store.get('favs', DEFAULT_FAVS);
 let run = null; // {phase, idx, endAt, left, paused, log:[{kind,start,end}], cfg}
 const isPlan = location.hash.startsWith('#plan');
@@ -440,7 +519,7 @@ function dualNote() {
   const planUrl = esc(location.href.split('#')[0] + '#plan');
   const others = screenDetails ? screenDetails.screens.length : 0;
   let t = {
-    unsupported: 'Dieser Browser kann Fenster nicht selbst auf einen anderen Monitor legen. Beim Start öffnet sich das Plan-Fenster hier: zieh es auf den zweiten Monitor und klick hinein für Vollbild. <b>Chrome und Edge</b> machen das automatisch.',
+    unsupported: '<b>Safari und Firefox</b> erlauben Websites nicht, Fenster auf einen anderen Monitor zu legen – das kann keine Website umgehen. So geht es trotzdem bequem: Beim ersten Start das Plan-Fenster auf den zweiten Monitor ziehen und mit dem grünen Knopf oben links auf Vollbild schalten. Danach bleibt es dort für alle weiteren Lernblöcke, bis du das Uhr-Fenster schliesst. <b>Chrome und Edge</b> platzieren es automatisch.',
     ask: 'Damit Uhr und Plan automatisch auf zwei Monitoren erscheinen, braucht der Browser einmalig deine Erlaubnis zur Fensterverwaltung.<div class="row"><button class="btn-ghost" data-act="screens">Bildschirme erkennen</button></div>',
     denied: 'Die Erlaubnis zur Fensterverwaltung ist blockiert. Erlaube sie in den Website-Einstellungen (Symbol links in der Adresszeile) – oder zieh das Plan-Fenster nach dem Start selbst hinüber.<div class="row"><button class="btn-ghost" data-act="screens">Erneut versuchen</button></div>',
     granted: others >= 2 ? `<b>Bereit.</b> Die Uhr läuft im Vollbild auf diesem Monitor, Ablauf und Notizen öffnen sich auf «${esc((screenDetails.screens.find((x) => x !== screenDetails.currentScreen) || {}).label || 'zweiter Monitor')}».`
@@ -477,7 +556,9 @@ function renderSetup() {
   $('dual-note').hidden = S.screens !== 2;
   $('dual-note').innerHTML = dualNote();
   $('goal').value !== S.goal && ($('goal').value = S.goal);
-  $('sound').checked = !!S.sound;
+  $('sounds').innerHTML = Object.keys(SOUND_NAMES).map((k) => `<button class="pill" data-snd="${k}" aria-pressed="${S.sound === k}">${SOUND_NAMES[k]}</button>`).join('');
+  $('vol').value = S.volume; $('vol').disabled = S.sound === 'off';
+  if (document.activeElement !== $('pl-url')) $('pl-url').value = S.playlist;
   const total = S.sessions * S.focus + (S.sessions - 1) * S.breakM;
   $('summary').textContent = `Gesamt ${dur(total)} · Ende ca. ${clockAt(Date.now() + total * 60000)}`;
   let bar = ''; for (let i = 0; i < S.sessions; i++) { bar += `<span style="flex:${S.focus};height:14px;background:${i ? '#9FC2B3' : 'var(--accent)'}"></span>`; if (i < S.sessions - 1) bar += `<span style="flex:${S.breakM};height:8px;background:#E3D6B4"></span>`; }
@@ -499,6 +580,7 @@ document.addEventListener('click', (e) => {
   else if (d.style) S.style = d.style;
   else if (d.screens) { S.screens = +d.screens; if (S.screens === 2 && screenState !== 'granted') { save(); prepareScreens(true); } }
   else if (d.act === 'screens') { prepareScreens(true); return; }
+  else if (d.snd) { S.sound = d.snd; playSound(); }
   else if (t.id === 'f-down') S.focus = Math.max(5, S.focus - 5);
   else if (t.id === 'f-up') S.focus = Math.min(180, S.focus + 5);
   else if (t.id === 'save-open') { $('save-box').hidden = false; t.hidden = true; $('fav-name').focus(); return; }
@@ -511,14 +593,31 @@ $('save-form').addEventListener('submit', (e) => { e.preventDefault();
   favs.push({ id: Date.now().toString(36), name, focus: S.focus, breakM: S.breakM, sessions: S.sessions, style: S.style });
   store.set('favs', favs); $('fav-name').value = ''; $('save-box').hidden = true; $('save-open').hidden = false; renderSetup(); });
 $('goal').addEventListener('input', (e) => { S.goal = e.target.value; save(); });
-$('sound').addEventListener('change', (e) => { S.sound = e.target.checked; save(); });
+$('vol').addEventListener('input', (e) => { S.volume = +e.target.value; save(); });
+$('vol').addEventListener('change', () => playSound());
+$('pl-url').addEventListener('change', (e) => { const v = e.target.value.trim() || DEFAULT_PLAYLIST, ok = spotifyEmbed(v);
+  $('pl-hint').classList.toggle('err', !ok);
+  if (!ok) { $('pl-hint').textContent = 'Das ist kein Spotify-Link. Kopiere ihn in Spotify über Teilen › Link kopieren.'; return; }
+  $('pl-hint').textContent = 'Gespeichert. Der Player spielt jetzt diese Playlist.'; S.playlist = v; save(); loadMusic(true); });
+$('music-open').addEventListener('click', () => toggleMusic(true));
 
 /* ---------------- Timer ---------------- */
 let audio = null;
-function chime() { if (!S.sound) return; try { audio = audio || new (window.AudioContext || window.webkitAudioContext)();
-  [[528, 0], [660, 0.35]].forEach(([f, t]) => { const o = audio.createOscillator(), g = audio.createGain(), at = audio.currentTime + t;
-    o.type = 'sine'; o.frequency.value = f; g.gain.setValueAtTime(0.0001, at); g.gain.exponentialRampToValueAtTime(0.18, at + 0.04); g.gain.exponentialRampToValueAtTime(0.0001, at + 2.4);
-    o.connect(g).connect(audio.destination); o.start(at); o.stop(at + 2.5); }); } catch {} }
+function ensureAudio() { try { audio = audio || new (window.AudioContext || window.webkitAudioContext)(); if (audio.state === 'suspended') audio.resume(); } catch { audio = null; } return audio; }
+/* Klänge werden synthetisch erzeugt: keine Audiodateien nötig */
+function playSound(kind) {
+  kind = kind || S.sound; if (kind === 'off' || !ensureAudio()) return;
+  const ctx = audio, t0 = ctx.currentTime + 0.05, master = ctx.createGain();
+  master.gain.value = Math.max(0, Math.min(1, S.volume ?? 0.7)); master.connect(ctx.destination);
+  const tone = (f, at, dur, peak, type) => { const o = ctx.createOscillator(), g = ctx.createGain(); o.type = type || 'sine'; o.frequency.value = f;
+    g.gain.setValueAtTime(0.0001, at); g.gain.exponentialRampToValueAtTime(peak, at + 0.015); g.gain.exponentialRampToValueAtTime(0.0001, at + dur);
+    o.connect(g).connect(master); o.start(at); o.stop(at + dur + 0.05); };
+  const bell = (f, at, len) => { tone(f, at, len, 0.22); tone(f * 2.01, at, len * 0.55, 0.07); tone(f * 3.02, at, len * 0.3, 0.035); };
+  if (kind === 'bells') [0, 1.7].forEach((r) => [659.25, 783.99, 1046.5].forEach((f, i) => bell(f, t0 + r + i * 0.32, 2.8)));
+  else if (kind === 'bowl') [0, 3.2].forEach((r) => { const a = t0 + r; tone(196, a, 7, 0.28); tone(197.6, a, 7, 0.16); tone(531, a, 4.5, 0.08); tone(1019, a, 2.6, 0.035); });
+  else if (kind === 'marimba') [0, 1.3].forEach((r) => [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => { const a = t0 + r + i * 0.14; tone(f, a, 0.9, 0.3); tone(f * 3.98, a, 0.12, 0.05); }));
+  else if (kind === 'finish') { [523.25, 659.25, 783.99, 1046.5, 1318.5].forEach((f, i) => bell(f, t0 + i * 0.22, 2.6)); [523.25, 783.99, 1046.5].forEach((f) => bell(f, t0 + 1.5, 4.5)); }
+}
 let wake = null;
 async function keepAwake() { try { wake = await navigator.wakeLock.request('screen'); } catch {} }
 function fullscreen(on) { try { const d = document; if (on ?? !d.fullscreenElement) d.documentElement.requestFullscreen?.().catch(() => {}); else d.exitFullscreen?.().catch(() => {}); } catch {} }
@@ -530,7 +629,7 @@ function begin(phase, idx) { const now = Date.now();
   Object.assign(run, { phase, idx, paused: false }); run.endAt = now + phaseLen(run);
   if (phase !== 'done') run.log.push({ kind: phase, idx, start: now, end: null }); }
 function start() {
-  try { audio = audio || new (window.AudioContext || window.webkitAudioContext)(); } catch {}
+  ensureAudio();
   run = { cfg: { focus: S.focus, breakM: S.breakM, sessions: S.sessions, style: S.style, screens: S.screens, goal: S.goal }, log: [], phase: 'focus', idx: 0 };
   begin('focus', 0);
   if (S.screens === 2) launchDual(); else fullscreen(true);
@@ -539,21 +638,38 @@ function start() {
 }
 function advance(manual) {
   if (!run) return;
-  if (run.phase === 'focus') { if (run.idx < run.cfg.sessions - 1) begin('break', run.idx); else finish(); }
+  run.alarm = false;
+  if (run.phase === 'focus') { if (run.idx < run.cfg.sessions - 1) begin('break', run.idx); else { finish(); if (!manual) playSound('finish'); } }
   else if (run.phase === 'break') begin('focus', run.idx + 1);
-  if (!manual) chime();
   lastSec = -1; show(); tick();
 }
 function finish() { const now = Date.now(); if (run.log.length) run.log[run.log.length - 1].end = now; run.phase = 'done'; run.paused = false; }
-function togglePause() { if (!run || run.phase === 'done') return;
+function ringAlarm() {
+  const c = run.cfg, brk = run.phase === 'break';
+  run.alarm = true; run.alarmAt = run.endAt; run.rings = 1;
+  $('al-kicker').textContent = brk ? 'Pause vorbei' : `Session ${run.idx + 1} von ${c.sessions} geschafft`;
+  $('al-title').textContent = brk ? `Weiter mit Session ${run.idx + 2}.` : 'Zeit für eine Pause.';
+  $('al-sub').textContent = brk ? `${c.focus} Minuten Fokus${c.goal ? ' · ' + c.goal : ''}` : `${c.breakM} Minuten Pause · danach Session ${run.idx + 2}`;
+  $('al-go').textContent = brk ? 'Session starten' : 'Pause starten';
+  $('al-more').textContent = brk ? '+ 5 min Pause' : '+ 5 min weiterlernen';
+  $('alarm').classList.toggle('al-break', brk);
+  toggleNotes(false); playSound(); try { navigator.vibrate?.([220, 120, 220, 120, 400]); } catch {}
+  show(); $('al-go').focus(); broadcast();
+}
+function togglePause() { if (!run || run.phase === 'done' || run.alarm) return;
   if (run.paused) { run.endAt = Date.now() + run.left; run.paused = false; } else { run.left = run.endAt - Date.now(); run.paused = true; }
   lastSec = -1; tick(); }
-function addFive() { if (!run) return; if (run.paused) run.left += 300000; else run.endAt += 300000; lastSec = -1; tick(); }
-function stop() { run = null; closePlan(); toggleNotes(false); document.title = 'Studytimer'; try { wake && wake.release(); } catch {} fullscreen(false); broadcast(); show(); renderSetup(); }
+function addFive() { if (!run) return;
+  if (run.alarm) { run.alarm = false; run.paused = false; run.endAt = Date.now() + 300000; show(); }
+  else if (run.paused) run.left += 300000; else run.endAt += 300000;
+  lastSec = -1; tick(); }
+function stop() { run = null; if (CAN_PLACE) closePlan(); toggleNotes(false); document.title = 'Studytimer'; try { wake && wake.release(); } catch {} fullscreen(false); broadcast(); show(); renderSetup(); }
 
 function show() {
   if (isPlan) return;
   const ph = run ? run.phase : 'setup';
+  $('alarm').hidden = !(run && run.alarm);
+  document.body.classList.toggle('in-stage', ph !== 'setup');
   $('setup').hidden = ph !== 'setup'; $('focus').hidden = ph !== 'focus'; $('pause').hidden = ph !== 'break'; $('done').hidden = ph !== 'done';
   if (ph === 'done') { const n = run.cfg.sessions; $('done-txt').textContent = `${n} ${n === 1 ? 'Session' : 'Sessions'} · ${dur(focusedMs() / 60000)} konzentriert gelernt.`;
     const nt = store.get('notes', '').trim(); $('done-notes').hidden = !nt; $('done-notes-txt').textContent = nt; toggleNotes(false); broadcast(); }
@@ -567,7 +683,13 @@ let lastSec = -1;
 function tick() {
   if (!run || run.phase === 'done' || isPlan) return;
   const ms = left(run);
-  if (ms <= 0 && !run.paused) { advance(false); return; }
+  if (run.alarm) { const since = Date.now() - run.alarmAt, sec = Math.floor(since / 1000); if (sec === lastSec) return; lastSec = sec;
+    if (run.rings === 1 && since > 30000) { run.rings = 2; playSound(); }
+    else if (run.rings === 2 && since > 90000) { run.rings = 3; playSound(); }
+    document.title = sec % 2 ? 'Zeit ist um · Studytimer' : '00:00 · Studytimer'; broadcast(); return; }
+  if (ms <= 0 && !run.paused) {
+    if (run.phase === 'focus' && run.idx >= run.cfg.sessions - 1) { advance(false); return; }
+    ringAlarm(); lastSec = -1; return; }
   const sec = Math.ceil(ms / 1000); if (sec === lastSec) return; lastSec = sec;
   const frac = Math.max(0, Math.min(1, ms / phaseLen(run))), c = run.cfg, t = fmt(ms);
   const sub = c.goal ? esc(c.goal) : '';
@@ -606,6 +728,26 @@ $('p-add').onclick = addFive;
 $('p-end').onclick = () => advance(true);
 $('done-back').onclick = stop;
 $('plan-open').onclick = openPlan;
+$('al-go').onclick = () => advance(true);
+$('al-more').onclick = addFive;
+
+/* ---------------- Musik (Spotify) ---------------- */
+function spotifyEmbed(v) { const m = String(v).match(/(playlist|album|artist|track|show|episode)[/:]([A-Za-z0-9]{22})/);
+  return m ? { url: `https://open.spotify.com/embed/${m[1]}/${m[2]}?utm_source=generator&theme=0`, open: `https://open.spotify.com/${m[1]}/${m[2]}` } : null; }
+function loadMusic(force) {
+  const box = $('music-frame'), e = spotifyEmbed(S.playlist) || spotifyEmbed(DEFAULT_PLAYLIST);
+  if (!EMBED_OK) { box.innerHTML = `<p class="music-fallback">Spotify lässt sich in dieser Vorschau nicht einbetten. Auf deiner Studytimer-Website läuft der Player direkt hier.<br><a href="${e.open}" target="_blank" rel="noopener">Playlist in Spotify öffnen</a></p>`; return; }
+  const f = box.querySelector('iframe');
+  if (f && !force) return;
+  if (f) { f.src = e.url; return; }
+  box.innerHTML = `<iframe title="Spotify-Player" src="${e.url}" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>`;
+}
+function toggleMusic(open) { const m = $('music'), o = open ?? !m.classList.contains('open');
+  if (o) loadMusic(false); m.classList.toggle('open', o);
+  ['b-music', 'p-music'].forEach((id) => $(id).setAttribute('aria-expanded', String(o))); $('b-music').classList.toggle('on', o); }
+$('b-music').onclick = () => toggleMusic();
+$('p-music').onclick = () => toggleMusic();
+$('music-close').onclick = () => toggleMusic(false);
 
 /* ---------------- Notizen (in allen Ansichten und Fenstern dieselben) ---------------- */
 function syncNotes(src) { const v = src ? src.value : store.get('notes', '');
@@ -628,15 +770,19 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && !$('drawer').hidden) { toggleNotes(false); return; }
   if (e.target.closest('input,textarea')) return;
   if (e.key === 'f' || e.key === 'F') { e.preventDefault(); fullscreen(); }
+  else if ((e.code === 'Space' || e.key === 'Enter') && run && run.alarm && !isPlan) { e.preventDefault(); advance(true); }
   else if (e.code === 'Space' && run && !isPlan) { e.preventDefault(); togglePause(); }
+  else if ((e.key === 'm' || e.key === 'M') && !isPlan) { e.preventDefault(); toggleMusic(); }
   else if ((e.key === 'n' || e.key === 'N') && run && !isPlan && run.phase !== 'done') { e.preventDefault(); toggleNotes(); }
 });
 
 /* ---------------- Zweiter Monitor ---------------- */
+const CAN_PLACE = 'getScreenDetails' in window;
 function otherScreen() { if (!screenDetails) return null; const cur = screenDetails.currentScreen; return screenDetails.screens.find((x) => x !== cur) || null; }
 function openPlanWindow() {
   const o = otherScreen();
   const feat = o ? `popup,left=${o.availLeft},top=${o.availTop},width=${o.availWidth},height=${o.availHeight}` : 'popup,width=1280,height=800';
+  if (planWin && !planWin.closed) { try { planWin.focus(); } catch {} setTimeout(broadcast, 300); return planWin; }
   let w = null; try { w = window.open(location.href.split('#')[0] + '#plan-' + pairId, 'studytimer-plan-' + pairId, feat); } catch {}
   popupBlocked = !w; if (w) planWin = w;
   setTimeout(broadcast, 800); setTimeout(broadcast, 2000);
@@ -651,14 +797,16 @@ function launchDual() {
     if (!openPlanWindow()) toast('Das Plan-Fenster wurde blockiert. Erlaube Pop-ups für diese Seite und klicke dann unten auf das Fenster-Symbol.');
   } else {
     /* Ohne Erlaubnis darf ein Klick nur eines von beiden: zuerst das Plan-Fenster öffnen */
-    if (openPlanWindow()) toast('Zieh das Plan-Fenster auf deinen zweiten Monitor und klick dort hinein für Vollbild. Danach hier F drücken.', 14000);
+    const had = planWin && !planWin.closed;
+    if (had) { openPlanWindow(); fullscreen(true); }
+    else if (openPlanWindow()) toast('Zieh das Plan-Fenster auf deinen zweiten Monitor und schalte es dort auf Vollbild. Es bleibt da für alle weiteren Lernblöcke. Danach hier F drücken.', 16000);
     else toast('Das Plan-Fenster wurde blockiert. Erlaube Pop-ups für diese Seite und klicke dann unten auf das Fenster-Symbol.');
   }
 }
 function openPlan() { if (planWin && !planWin.closed) { try { planWin.focus(); } catch {} return; } openPlanWindow(); }
 function closePlan() { if (bc) bc.postMessage({ type: 'bye', id: pairId }); try { planWin && !planWin.closed && planWin.close(); } catch {} planWin = null; }
 function broadcast() { if (!bc || isPlan) return;
-  bc.postMessage({ type: 'state', id: pairId, run: run ? { phase: run.phase, idx: run.idx, endAt: run.endAt, left: run.left, paused: run.paused, log: run.log, cfg: run.cfg } : null, now: Date.now() }); }
+  bc.postMessage({ type: 'state', id: pairId, run: run ? { phase: run.phase, idx: run.idx, endAt: run.endAt, left: run.left, paused: run.paused, alarm: !!run.alarm, log: run.log, cfg: run.cfg } : null, now: Date.now() }); }
 if (bc && !isPlan) bc.onmessage = (e) => { const m = e.data; if (m.id && m.id !== pairId) return;
   if (m.type === 'hello') broadcast();
   else if (m.type === 'cmd' && run) { ({ toggle: togglePause, skip: () => advance(true), stop, add5: addFive })[m.cmd]?.(); } };
@@ -675,7 +823,7 @@ function initPlan() {
   document.addEventListener('fullscreenchange', fsBanner); fsBanner();
   $('plan').addEventListener('pointerdown', (e) => { if (!document.fullscreenElement && !e.target.closest('#pl-fs')) fullscreen(true); });
   setInterval(() => { try { if (window.opener && window.opener.closed) ended(); } catch {} }, 1000);
-  $('pl-toggle').onclick = () => send('toggle'); $('pl-skip').onclick = () => send('skip'); $('pl-stop').onclick = () => send('stop'); $('pl-fs').onclick = () => fullscreen();
+  $('pl-toggle').onclick = () => send(R && R.alarm ? 'add5' : 'toggle'); $('pl-skip').onclick = () => send('skip'); $('pl-stop').onclick = () => send('stop'); $('pl-fs').onclick = () => fullscreen();
   let todos = store.get('todos', []);
   const drawTodos = () => { $('todos').innerHTML = todos.map((t, i) => `<div class="todo${t.done ? ' checked' : ''}"><input type="checkbox" id="td${i}" data-i="${i}" ${t.done ? 'checked' : ''}><span><label for="td${i}">${esc(t.text)}</label></span><button data-x="${i}" aria-label="Schritt entfernen"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>`).join(''); };
   $('todos').addEventListener('change', (e) => { const i = +e.target.dataset.i; todos[i].done = e.target.checked; store.set('todos', todos); drawTodos(); });
@@ -688,11 +836,13 @@ function initPlan() {
       $('pl-phase').textContent = 'Ziel dieser Session'; $('pl-goal').textContent = R ? 'Gipfel erreicht.' : 'Wartet auf den Timer …'; if (!R) { $('tl').innerHTML = ''; } }
     if (!R) return;
     const now = Date.now() + off, c = R.cfg, ms = R.paused ? R.left : R.endAt - now;
-    if (R.phase !== 'done') { $('pl-time').textContent = fmt(ms);
-      $('pl-next').textContent = R.paused ? 'Angehalten' : (R.phase === 'break' ? 'Weiter um ' : R.idx < c.sessions - 1 ? 'Pause um ' : 'Fertig um ') + clockAt(R.endAt - off);
+    $('pl-time').classList.toggle('ringing', !!R.alarm);
+    if (R.phase !== 'done') { $('pl-time').textContent = R.alarm ? '00:00' : fmt(ms);
+      $('pl-next').textContent = R.alarm ? 'Zeit ist um' : R.paused ? 'Angehalten' : (R.phase === 'break' ? 'Weiter um ' : R.idx < c.sessions - 1 ? 'Pause um ' : 'Fertig um ') + clockAt(R.endAt - off);
       $('pl-phase').textContent = R.phase === 'break' ? 'Pause' : `Session ${R.idx + 1} von ${c.sessions}`;
       $('pl-goal').textContent = c.goal || 'Konzentriert lernen';
-      $('pl-toggle').textContent = R.paused ? 'Fortsetzen' : 'Pausieren'; }
+      $('pl-toggle').textContent = R.alarm ? '+ 5 min' : R.paused ? 'Fortsetzen' : 'Pausieren';
+      $('pl-skip').textContent = R.alarm ? (R.phase === 'focus' ? 'Pause starten' : 'Session starten') : 'Nächste Phase'; }
     /* Ablauf: vergangene Phasen aus dem Log, künftige hochgerechnet */
     const rows = []; R.log.forEach((l) => rows.push({ kind: l.kind, idx: l.idx, s: l.start, e: l.end }));
     let t = R.phase === 'done' ? 0 : (R.paused ? now + R.left : R.endAt);

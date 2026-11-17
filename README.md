@@ -1,6 +1,6 @@
 # Studytimer
 
-Ruhiger Study-Timer im Vollbild: Favoriten, Sessions, Pausen, Notizen, Uhr als Ring, Sanduhr, Bergsteiger oder Ziffern, Modus für 1 oder 2 Monitore.
+Ruhiger Study-Timer im Vollbild: Favoriten, Sessions, Pausen, Notizen, Timer-Klang mit Alarm, Spotify-Player (Standard: This Is Hans Zimmer), Uhr als Ring, Sanduhr, Bergsteiger oder Ziffern, Modus für 1 oder 2 Monitore.
 
 Öffnen: `index.html` im Browser. Zweiter Monitor: `index.html#plan`.
 
@@ -10,4 +10,4 @@ Einstellungen, Favoriten, Notizen und Schritte bleiben nur im Browser des jeweil
 
 ## 2 Monitore
 
-In Chrome und Edge legt Studytimer das Plan-Fenster nach einmaliger Erlaubnis zur Fensterverwaltung automatisch auf den zweiten Monitor. Firefox und Safari öffnen es auf dem aktuellen Monitor; dort muss es von Hand hinübergezogen werden.
+In Chrome und Edge legt Studytimer das Plan-Fenster nach einmaliger Erlaubnis zur Fensterverwaltung automatisch auf den zweiten Monitor. Safari und Firefox erlauben Websites nicht, Fenster auf einen anderen Monitor zu legen. Dort zieht man das Plan-Fenster einmal hinüber; es bleibt für alle weiteren Lernblöcke offen, bis das Uhr-Fenster geschlossen wird.
