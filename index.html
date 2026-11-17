@@ -1,0 +1,619 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>body{margin:0}</style>
+<title>Lernzeit</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400&family=Inter:wght@400;500;600&display=swap">
+<style>
+/* Layout: Einrichten = 3 Spalten (Favoriten | Einstellungen | Vorschau); Fokus/Pause = Vollbild-Bühne, eine Uhr, sonst fast nichts */
+:root{
+  --bg:#F3F5F1;--surface:#FFFFFF;--ink:#1C2B2D;--muted:#566663;--line:#D5DDD9;--accent:#2F6B5E;--accent-ink:#FFFFFF;--sel:#E6EFEB;
+  --f-bg:#10191C;--f-ink:#E4ECE7;--f-muted:#8FA7A0;--f-line:#2C3F3D;--f-track:#1C2B2D;--f-accent:#8DB5A2;--f-mid:#4C6A63;--sand:#D9C79B;--warm:#E9B97A;
+  --p-bg:#EEF2EC;--p-ink:#1C2B2D;--p-muted:#4F625E;--p-c1:#E1EAE4;--p-c2:#D3E1D9;--p-c3:#C3D7CB;--p-line:#B9C7C1;
+  --display:"Fraunces",Georgia,"Times New Roman",serif;--body:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#131D20;--surface:#18262A;--ink:#E4ECE7;--muted:#9FB4AD;--line:#2C3F3D;--accent:#8DB5A2;--accent-ink:#10191C;--sel:#1E3231;
+  --p-bg:#152321;--p-ink:#E4ECE7;--p-muted:#A3B8B1;--p-c1:#1A2B29;--p-c2:#1F3330;--p-c3:#243B37;--p-line:#2F4441;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#131D20;--surface:#18262A;--ink:#E4ECE7;--muted:#9FB4AD;--line:#2C3F3D;--accent:#8DB5A2;--accent-ink:#10191C;--sel:#1E3231;
+  --p-bg:#152321;--p-ink:#E4ECE7;--p-muted:#A3B8B1;--p-c1:#1A2B29;--p-c2:#1F3330;--p-c3:#243B37;--p-line:#2F4441;color-scheme:dark}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;-webkit-font-smoothing:antialiased}
+button,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+[hidden]{display:none!important}
+h1,h2{text-wrap:balance}
+
+/* ---------- Einrichten ---------- */
+#setup{min-height:100%;box-sizing:border-box;padding-block:32px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:28px;max-width:1360px;margin:0 auto}
+.top{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:12px;font-family:var(--display);font-size:26px}
+.brand svg circle{stroke:var(--accent)}.brand svg path{fill:var(--accent)}
+.top-right{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.summary{color:var(--muted);font-size:14px;font-variant-numeric:tabular-nums}
+.btn-primary{display:inline-flex;align-items:center;gap:10px;height:48px;padding:0 24px;border-radius:24px;border:0;background:var(--accent);color:var(--accent-ink);font-weight:500}
+.btn-ghost{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:44px;padding:0 18px;border-radius:22px;border:1px solid var(--line);background:transparent;color:var(--ink);font-size:14px}
+.grid{display:grid;grid-template-columns:300px minmax(0,1fr) 340px;gap:28px;align-items:start}
+@media (max-width:1100px){.grid{grid-template-columns:minmax(0,1fr)}}
+.label{margin:0 0 4px;font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.favs{display:flex;flex-direction:column;gap:10px}
+.fav{display:flex;align-items:center;gap:8px;border-radius:14px;border:1px solid transparent;background:color-mix(in srgb,var(--surface) 60%,transparent)}
+.fav.on{border-color:var(--accent);background:var(--surface)}
+.fav-main{flex:1;min-width:0;text-align:left;display:flex;flex-direction:column;gap:3px;padding:14px 4px 14px 18px;border:0;background:none}
+.fav-name{font-size:16px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fav-meta{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.fav-del{width:44px;height:44px;border:0;background:none;color:var(--muted);border-radius:12px;flex:none}
+.fav-del:hover{color:var(--ink)}
+.save-row{display:flex;gap:8px}
+.save-row input{flex:1;min-width:0;height:44px;padding:0 14px;border-radius:12px;border:1px solid var(--line);background:var(--surface)}
+.dashed{width:100%;height:48px;border-radius:14px;border:1px dashed var(--line);background:transparent;color:var(--accent);font-weight:500;font-size:14px;display:flex;align-items:center;justify-content:center;gap:8px}
+.card{background:var(--surface);border-radius:20px;padding:28px 32px;display:flex;flex-direction:column;gap:26px;box-shadow:0 1px 2px rgba(28,43,45,.06)}
+@media (max-width:520px){.card{padding:22px 18px}}
+.field{display:flex;flex-direction:column;gap:12px;border:0;margin:0;padding:0;min-width:0}
+.field>legend,.field>.flabel{font-size:14px;font-weight:500;padding:0;margin-bottom:12px}
+.two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:26px}
+@media (max-width:640px){.two{grid-template-columns:minmax(0,1fr)}}
+.stepper{display:flex;align-items:center;gap:14px}
+.round{width:44px;height:44px;border-radius:22px;border:1px solid var(--line);background:var(--surface);font-size:20px;line-height:1}
+.big-num{font-family:var(--display);font-weight:300;font-size:44px;min-width:110px;text-align:center;font-variant-numeric:tabular-nums}
+.big-num small{font-family:var(--body);font-size:15px;color:var(--muted)}
+.pills{display:flex;gap:8px;flex-wrap:wrap}
+.pill{height:44px;min-width:48px;padding:0 14px;border-radius:22px;border:1px solid var(--line);background:var(--surface);font-size:14px;font-weight:500;font-variant-numeric:tabular-nums}
+.pill[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.styles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+@media (max-width:640px){.styles{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.opt{display:flex;flex-direction:column;align-items:center;gap:10px;padding:18px 8px 14px;border-radius:14px;border:1px solid var(--line);background:var(--surface);font-size:14px;font-weight:500}
+.opt svg{stroke:var(--accent);fill:none}
+.opt[aria-pressed="true"],.mon[aria-pressed="true"]{border-color:var(--accent);background:var(--sel)}
+.mons{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media (max-width:640px){.mons{grid-template-columns:minmax(0,1fr)}}
+.mon{display:flex;align-items:center;gap:16px;padding:16px 18px;border-radius:14px;border:1px solid var(--line);background:var(--surface);text-align:left}
+.mon svg{stroke:var(--accent);fill:none;flex:none}
+.mon b{display:block;font-weight:500;font-size:15px}.mon span{display:block;font-size:13px;color:var(--muted);margin-top:3px}
+.text-in{height:46px;padding:0 14px;border-radius:12px;border:1px solid var(--line);background:var(--bg)}
+.switch{display:flex;align-items:center;gap:12px;font-size:14px}
+.switch input{width:18px;height:18px;accent-color:var(--accent)}
+.side{display:flex;flex-direction:column;gap:12px}
+.preview{background:var(--f-bg);color:var(--f-ink);border-radius:20px;height:290px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;overflow:hidden}
+.preview .pv{width:100%;height:200px;display:flex;align-items:center;justify-content:center}
+.preview .pv svg{max-height:200px;max-width:90%}
+.preview .cap{font-size:13px;color:var(--f-muted)}
+.flow{background:var(--surface);border-radius:16px;padding:20px 22px;display:flex;flex-direction:column;gap:14px}
+.bar{display:flex;align-items:center;gap:4px;height:14px}
+.bar span{display:block;border-radius:4px}
+.flow-legend{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.hint{margin:0;font-size:13px;line-height:1.5;color:var(--muted)}
+kbd{font-family:var(--body);font-size:12px;padding:2px 6px;border:1px solid var(--line);border-radius:6px;background:var(--surface)}
+.notice{font-size:13px;line-height:1.5;color:var(--muted);background:var(--sel);border-radius:12px;padding:12px 14px}
+.notice code{user-select:all;word-break:break-all}
+
+/* ---------- Fokus ---------- */
+.stage{position:fixed;inset:0;background:var(--f-bg);color:var(--f-ink);font-family:var(--body);overflow:hidden;color-scheme:dark}
+.stage-top,.stage-bottom{position:absolute;left:0;right:0;z-index:2;display:flex;justify-content:space-between;align-items:center;gap:16px;
+  padding-left:max(40px,env(safe-area-inset-left,0px));padding-right:max(40px,env(safe-area-inset-right,0px))}
+.stage-top{top:0;padding-top:calc(32px + env(safe-area-inset-top,0px));font-size:14px;color:var(--f-muted)}
+.stage-bottom{bottom:0;padding-bottom:calc(32px + env(safe-area-inset-bottom,0px))}
+@media (max-width:600px){.stage-top,.stage-bottom{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}.stage-top{flex-direction:column;align-items:flex-start;gap:4px}}
+.dots{display:flex;gap:8px;flex-wrap:wrap}
+.dots i{display:block;width:36px;height:6px;border-radius:3px;background:var(--f-track)}
+.dots i.done{background:var(--f-accent)}.dots i.now{background:var(--f-mid)}
+.ctrls{display:flex;gap:10px;transition:opacity .6s}
+.idle .ctrls,.idle .stage-top{opacity:.18}
+.ic{width:44px;height:44px;border-radius:22px;border:1px solid var(--f-line);background:var(--f-bg);color:#B8C9C3;display:flex;align-items:center;justify-content:center}
+.ic svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8}
+.ic:hover{color:var(--f-ink)}
+.clock{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+.time{font-family:var(--display);font-weight:300;letter-spacing:-.03em;line-height:1;font-variant-numeric:tabular-nums}
+.sub{font-size:16px;color:var(--f-muted);text-align:center}
+.c-ring{position:relative;width:min(68vmin,640px);aspect-ratio:1;max-width:100%}
+.c-ring svg{position:absolute;inset:0;width:100%;height:100%}
+.c-ring .inner{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px}
+.c-ring .time{font-size:min(17vmin,168px)}
+.ring-track{fill:none;stroke:var(--f-track);stroke-width:4}
+.ring-arc{fill:none;stroke:var(--f-accent);stroke-width:4;stroke-linecap:round}
+.tick{stroke:#26383A;stroke-width:1.2;stroke-linecap:round}.tick.major{stroke:var(--f-mid);stroke-width:2}
+.c-sand{display:flex;align-items:center;justify-content:center;gap:min(9vw,120px);padding:0 24px}
+.c-sand svg{height:min(68vh,640px);width:auto;flex:none}
+.c-sand .col{display:flex;flex-direction:column;gap:14px}
+.c-sand .time{font-size:min(15vw,20vh,184px)}
+.c-sand .sub{text-align:left}
+@media (max-width:700px){.c-sand{flex-direction:column;gap:24px}.c-sand svg{height:40vh}.c-sand .col{align-items:center}.c-sand .sub{text-align:center}}
+.glass{fill:none;stroke:#3E5A57;stroke-width:2.5}.cap-wood{fill:#4A3F33}.sandfill{fill:var(--sand)}
+.c-berg svg{position:absolute;inset:0;width:100%;height:100%}
+.c-berg .over{position:absolute;top:calc(110px + env(safe-area-inset-top,0px));left:max(40px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:12px}
+.c-berg .time{font-size:min(14vw,20vh,168px)}.c-berg .sub{text-align:left}
+@media (max-width:600px){.c-berg .over{left:16px}}
+.c-dig{display:flex;flex-direction:column;align-items:center;gap:22px}
+.c-dig .time{font-size:min(28vw,34vh,320px)}
+.c-dig .line{width:min(60vw,560px);height:3px;border-radius:2px;background:var(--f-track);overflow:hidden}
+.c-dig .line b{display:block;height:100%;background:var(--f-accent)}
+.paused-tag{display:inline-block;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--warm)}
+
+/* ---------- Pause ---------- */
+.pause-stage{background:var(--p-bg);color:var(--p-ink);color-scheme:normal}
+.pause-stage .stage-top{color:var(--p-muted)}
+.pause-stage .dots i{background:var(--p-c3)}.pause-stage .dots i.done{background:var(--accent)}
+.breath{position:relative;width:min(44vmin,340px);aspect-ratio:1;display:flex;align-items:center;justify-content:center}
+.breath i{position:absolute;border-radius:50%}
+.breath i:nth-child(1){inset:0;background:var(--p-c1)}.breath i:nth-child(2){inset:12%;background:var(--p-c2)}.breath i:nth-child(3){inset:24%;background:var(--p-c3)}
+@media (prefers-reduced-motion:no-preference){.breath i:nth-child(1){animation:breathe 8s ease-in-out infinite}}
+@keyframes breathe{50%{transform:scale(1.06)}}
+.breath .in{position:relative;display:flex;flex-direction:column;align-items:center;gap:4px}
+.breath .time{font-size:min(12vmin,96px)}
+.pause-col{display:flex;flex-direction:column;align-items:center;gap:32px;text-align:center;padding:0 16px}
+.pause-col h1{margin:0;font-family:var(--display);font-weight:400;font-size:clamp(24px,3vw,32px)}
+.pause-col p{margin:8px 0 0;color:var(--p-muted)}
+.p-btn{height:44px;padding:0 20px;border-radius:22px;border:1px solid var(--p-line);background:transparent;color:var(--p-ink);font-size:14px}
+.p-btn.main{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:500}
+
+/* ---------- Fertig ---------- */
+.done-col{display:flex;flex-direction:column;align-items:center;gap:20px;text-align:center;padding:0 16px}
+.done-col h1{margin:0;font-family:var(--display);font-weight:300;font-size:clamp(40px,6vw,72px)}
+.done-col p{margin:0;color:var(--f-muted);font-size:17px}
+
+/* ---------- Plan (2. Monitor) ---------- */
+#plan{position:fixed;inset:0;background:#131D20;color:var(--f-ink);overflow:auto;color-scheme:dark}
+.plan-wrap{box-sizing:border-box;min-height:100%;padding-block:40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));max-width:1320px;margin:0 auto;display:grid;grid-template-columns:360px minmax(0,1fr);gap:56px}
+@media (max-width:900px){.plan-wrap{grid-template-columns:minmax(0,1fr);gap:32px}}
+.plan-wrap .label{color:var(--f-muted)}
+.tl{list-style:none;margin:14px 0 0;padding:0}
+.tl li{display:flex;gap:16px}
+.tl .rail{display:flex;flex-direction:column;align-items:center;width:14px;flex:none}
+.tl .rail b{width:12px;height:12px;border-radius:6px;margin-top:4px;box-sizing:border-box;border:2px solid #3A504D}
+.tl .rail s{flex:1;width:2px;background:#22322F;margin:4px 0}
+.tl li.done .rail b{border-color:var(--f-accent);background:var(--f-accent)}
+.tl li.now .rail b{border-color:var(--f-accent)}
+.tl .row{flex:1;display:flex;justify-content:space-between;gap:12px;padding-bottom:20px;color:#B8C9C3;font-size:16px}
+.tl li.brk .row{font-size:14px;padding-bottom:16px}
+.tl li.now .row{color:var(--f-ink);font-weight:600}.tl li.done .row{color:var(--f-muted)}
+.tl .row time{color:var(--f-muted);font-size:14px;font-weight:400;font-variant-numeric:tabular-nums}
+.stat{margin-top:12px;padding:20px;border-radius:16px;background:#18262A}
+.stat span{font-size:13px;color:var(--f-muted)}.stat div{font-family:var(--display);font-weight:300;font-size:40px;font-variant-numeric:tabular-nums}
+.pmain{display:flex;flex-direction:column;gap:26px;min-width:0}
+.phead{display:flex;justify-content:space-between;gap:24px;flex-wrap:wrap}
+.phead h1{margin:6px 0 0;font-family:var(--display);font-weight:400;font-size:clamp(28px,3vw,40px);line-height:1.2}
+.phead .t{text-align:right}.phead .t .time{font-size:56px}.phead .t div+div{font-size:13px;color:var(--f-muted);margin-top:6px}
+.todo-list{display:flex;flex-direction:column;gap:8px}
+.todo{display:flex;align-items:center;gap:12px;min-height:46px;padding:0 6px 0 16px;border-radius:12px;background:#18262A}
+.todo input[type=checkbox]{width:18px;height:18px;accent-color:#8DB5A2;flex:none}
+.todo span{flex:1;min-width:0;overflow-wrap:anywhere}
+.todo.checked span{color:var(--f-muted);text-decoration:line-through}
+.todo button{width:40px;height:40px;border:0;background:none;color:var(--f-muted);border-radius:10px}
+.todo-add{display:flex;gap:8px}
+.dark-in{flex:1;min-width:0;height:46px;padding:0 14px;border-radius:12px;border:1px solid var(--f-line);background:#10191C;color:var(--f-ink)}
+.plan-notes{width:100%;box-sizing:border-box;min-height:180px;resize:vertical;padding:16px;border-radius:12px;border:1px solid var(--f-line);background:#10191C;color:var(--f-ink);line-height:1.5}
+.pbtns{display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap}
+.d-btn{height:44px;padding:0 20px;border-radius:22px;border:1px solid var(--f-line);background:transparent;color:#B8C9C3;font-size:14px}
+.d-btn.main{background:var(--f-accent);border-color:var(--f-accent);color:#10191C;font-weight:500}
+.wait{color:var(--f-muted);font-size:15px;line-height:1.6;max-width:56ch}
+</style>
+</head>
+<body>
+
+<!-- ===== Einrichten ===== -->
+<main id="setup" class="view">
+  <header class="top">
+    <div class="brand"><svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><circle cx="14" cy="14" r="12" fill="none" stroke-width="2"/><path d="M14 2a12 12 0 0 1 12 12H14z"/></svg>Lernzeit</div>
+    <div class="top-right">
+      <span class="summary" id="summary"></span>
+      <button class="btn-primary" id="start"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>Im Vollbild starten</button>
+    </div>
+  </header>
+
+  <div class="grid">
+    <section aria-labelledby="fav-h" class="favs">
+      <h2 class="label" id="fav-h">Favoriten</h2>
+      <div class="favs" id="favs"></div>
+      <div id="save-box" hidden>
+        <form class="save-row" id="save-form">
+          <label for="fav-name" class="label" hidden>Name des Favoriten</label>
+          <input id="fav-name" placeholder="Name, z. B. Abendrunde" maxlength="40" aria-label="Name des Favoriten">
+          <button class="btn-ghost" type="submit">Speichern</button>
+        </form>
+      </div>
+      <button class="dashed" id="save-open"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Aktuelle Einstellung speichern</button>
+    </section>
+
+    <section class="card" aria-label="Einstellungen">
+      <div class="field">
+        <label class="flabel" for="goal">Was lernst du?</label>
+        <input class="text-in" id="goal" placeholder="z. B. Lineare Algebra · Kapitel 4" maxlength="80">
+      </div>
+      <div class="two">
+        <div class="field">
+          <span class="flabel" id="focus-l">Fokusdauer</span>
+          <div class="stepper" role="group" aria-labelledby="focus-l">
+            <button class="round" id="f-down" aria-label="Fokusdauer um 5 Minuten verkürzen">−</button>
+            <span class="big-num" id="focus-v" aria-live="polite"></span>
+            <button class="round" id="f-up" aria-label="Fokusdauer um 5 Minuten verlängern">+</button>
+          </div>
+        </div>
+        <fieldset class="field"><legend>Pausenlänge</legend><div class="pills" id="breaks"></div></fieldset>
+      </div>
+      <fieldset class="field"><legend>Anzahl Sessions</legend><div class="pills" id="sessions"></div></fieldset>
+      <fieldset class="field"><legend>Uhr-Darstellung</legend><div class="styles" id="styles"></div></fieldset>
+      <fieldset class="field"><legend>Bildschirme</legend>
+        <div class="mons">
+          <button class="mon" data-screens="1"><svg width="44" height="34" viewBox="0 0 44 34" stroke-width="2" aria-hidden="true"><rect x="5" y="3" width="34" height="22" rx="3"/><path d="M16 31h12M22 25v6"/></svg><div><b>1 Monitor</b><span>Uhr füllt den Bildschirm</span></div></button>
+          <button class="mon" data-screens="2"><svg width="56" height="34" viewBox="0 0 56 34" stroke-width="2" aria-hidden="true"><rect x="2" y="5" width="25" height="18" rx="3"/><rect x="29" y="5" width="25" height="18" rx="3"/><path d="M10 31h10M15 23v8M36 31h10M41 23v8"/></svg><div><b>2 Monitore</b><span>Uhr hier, Plan &amp; Notizen im zweiten Fenster</span></div></button>
+        </div>
+        <div class="notice" id="dual-note" hidden></div>
+      </fieldset>
+      <label class="switch" for="sound"><input type="checkbox" id="sound"> Leiser Gong am Ende jeder Phase</label>
+    </section>
+
+    <aside class="side" aria-labelledby="pv-h">
+      <h2 class="label" id="pv-h">Vorschau</h2>
+      <div class="preview"><div class="pv" id="pv"></div><span class="cap" id="pv-cap"></span></div>
+      <div class="flow">
+        <span class="label">Ablauf</span>
+        <div class="bar" id="bar"></div>
+        <div class="flow-legend"><span id="lg-f"></span><span id="lg-p"></span></div>
+      </div>
+      <p class="hint">Im Timer: <kbd>Leertaste</kbd> pausiert, <kbd>F</kbd> schaltet Vollbild, <kbd>Esc</kbd> verlässt es. Einstellungen und Favoriten bleiben in diesem Browser gespeichert.</p>
+    </aside>
+  </div>
+</main>
+
+<!-- ===== Fokus ===== -->
+<section id="focus" class="view stage" hidden aria-label="Fokus">
+  <div class="stage-top"><span id="f-top-l"></span><span id="f-top-r"></span></div>
+  <div class="clock" id="clock"></div>
+  <div class="stage-bottom">
+    <div class="dots" id="f-dots"></div>
+    <div class="ctrls">
+      <button class="ic" id="plan-open" hidden aria-label="Plan-Fenster öffnen"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="8" height="12" rx="1.5"/><rect x="13" y="5" width="8" height="12" rx="1.5"/></svg></button>
+      <button class="ic" id="b-toggle" aria-label="Pausieren"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5v14M15 5v14"/></svg></button>
+      <button class="ic" id="b-skip" aria-label="Session beenden und zur Pause"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5l9 7-9 7zM18 5v14"/></svg></button>
+      <button class="ic" id="b-fs" aria-label="Vollbild umschalten"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+      <button class="ic" id="b-stop" aria-label="Lernblock beenden"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Pause ===== -->
+<section id="pause" class="view stage pause-stage" hidden aria-label="Pause">
+  <div class="stage-top"><span id="p-top-l"></span><span id="p-top-r"></span></div>
+  <div class="clock">
+    <div class="pause-col">
+      <div class="breath"><i></i><i></i><i></i><div class="in"><span class="time" id="p-time"></span><span id="p-tag" style="font-size:14px;color:var(--p-muted)">Pause</span></div></div>
+      <div><h1>Atme ruhig ein – und aus.</h1><p>Weg vom Bildschirm: aufstehen, Wasser trinken, aus dem Fenster schauen.</p></div>
+    </div>
+  </div>
+  <div class="stage-bottom">
+    <div class="dots" id="p-dots"></div>
+    <div class="ctrls" style="flex-wrap:wrap">
+      <button class="p-btn" id="p-add">+ 5 min</button>
+      <button class="p-btn main" id="p-end">Pause beenden</button>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Fertig ===== -->
+<section id="done" class="view stage" hidden aria-label="Geschafft">
+  <div class="clock"><div class="done-col">
+    <svg width="120" height="80" viewBox="0 0 120 80" aria-hidden="true"><path d="M4 76L44 20l18 24 12-14 42 46z" fill="#1E3233"/><path d="M44 20V2l16 6-16 6" fill="#E9B97A" stroke="#E9B97A" stroke-width="2" stroke-linejoin="round"/></svg>
+    <h1>Gipfel erreicht.</h1>
+    <p id="done-txt"></p>
+    <button class="d-btn main" id="done-back">Zurück zur Übersicht</button>
+  </div></div>
+</section>
+
+<!-- ===== Plan (zweiter Monitor) ===== -->
+<section id="plan" class="view" hidden aria-label="Lernplan">
+  <div class="plan-wrap">
+    <section aria-labelledby="tl-h" style="display:flex;flex-direction:column">
+      <h2 class="label" id="tl-h">Heutiger Ablauf</h2>
+      <ol class="tl" id="tl"></ol>
+      <div class="stat"><span>Heute fokussiert</span><div id="pl-total">0 min</div></div>
+    </section>
+    <section class="pmain" aria-label="Aktuelle Session">
+      <div class="phead">
+        <div><span class="label" id="pl-phase">Ziel dieser Session</span><h1 id="pl-goal">Wartet auf den Timer …</h1></div>
+        <div class="t"><div class="time" id="pl-time">--:--</div><div id="pl-next"></div></div>
+      </div>
+      <p class="wait" id="pl-wait">Dieses Fenster zeigt Ablauf, Schritte und Notizen. Starte den Timer im Hauptfenster – beide Fenster bleiben automatisch synchron. Zieh dieses Fenster auf deinen zweiten Monitor und drücke <kbd>F</kbd> für Vollbild.</p>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <span class="label">Schritte</span>
+        <div class="todo-list" id="todos"></div>
+        <form class="todo-add" id="todo-form"><input class="dark-in" id="todo-in" placeholder="Nächster Schritt …" aria-label="Neuer Schritt" maxlength="120"><button class="d-btn" type="submit">Hinzufügen</button></form>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <label class="label" for="notes">Gedanken parken – später erledigen</label>
+        <textarea class="plan-notes" id="notes" placeholder="Was dir gerade einfällt, aber nicht zur Aufgabe gehört …"></textarea>
+      </div>
+      <div class="pbtns">
+        <button class="d-btn" id="pl-fs">Vollbild</button>
+        <button class="d-btn" id="pl-toggle">Pausieren</button>
+        <button class="d-btn" id="pl-skip">Nächste Phase</button>
+        <button class="d-btn main" id="pl-stop">Beenden</button>
+      </div>
+    </section>
+  </div>
+</section>
+
+<script>
+(() => {
+const $ = (id) => document.getElementById(id);
+const store = {
+  get(k, d) { try { const v = localStorage.getItem('lernzeit.' + k); return v ? JSON.parse(v) : d; } catch { return d; } },
+  set(k, v) { try { localStorage.setItem('lernzeit.' + k, JSON.stringify(v)); } catch {} }
+};
+const STYLE_NAMES = { ring: 'Ring', sand: 'Sanduhr', berg: 'Bergsteiger', digital: 'Ziffern' };
+const DEFAULT_FAVS = [
+  { id: 'a', name: 'Deep Work', focus: 50, breakM: 10, sessions: 3, style: 'ring' },
+  { id: 'b', name: 'Pomodoro', focus: 25, breakM: 5, sessions: 4, style: 'sand' },
+  { id: 'c', name: 'Prüfungsphase', focus: 90, breakM: 15, sessions: 2, style: 'berg' },
+  { id: 'd', name: 'Vokabeln', focus: 15, breakM: 3, sessions: 6, style: 'digital' }
+];
+let S = Object.assign({ focus: 50, breakM: 10, sessions: 3, style: 'ring', screens: 1, goal: '', sound: true }, store.get('settings', {}));
+let favs = store.get('favs', DEFAULT_FAVS);
+let run = null; // {phase, idx, endAt, left, paused, log:[{kind,start,end}], cfg}
+const isPlan = location.hash === '#plan';
+const bc = ('BroadcastChannel' in window) ? new BroadcastChannel('lernzeit') : null;
+
+const fmt = (ms) => { const s = Math.max(0, Math.ceil(ms / 1000)); const m = Math.floor(s / 60); const h = Math.floor(m / 60);
+  return h ? h + ':' + String(m % 60).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0') : String(m).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0'); };
+const clockAt = (t) => new Date(t).toLocaleTimeString('de-CH', { hour: '2-digit', minute: '2-digit' });
+const dur = (min) => { const h = Math.floor(min / 60), m = Math.round(min % 60); return (h ? h + ' h ' : '') + (h && !m ? '' : m + ' min'); };
+const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+/* ---------------- Uhren ---------------- */
+let TICKS = '';
+for (let i = 0; i < 60; i++) { const a = i / 60 * 2 * Math.PI - Math.PI / 2, mj = i % 5 === 0, r2 = mj ? 278 : 285;
+  TICKS += `<line class="tick${mj ? ' major' : ''}" x1="${(310 + 292 * Math.cos(a)).toFixed(1)}" y1="${(310 + 292 * Math.sin(a)).toFixed(1)}" x2="${(310 + r2 * Math.cos(a)).toFixed(1)}" y2="${(310 + r2 * Math.sin(a)).toFixed(1)}"/>`; }
+const ringSvg = (frac) => { const C = 2 * Math.PI * 262;
+  return `<svg viewBox="0 0 620 620" aria-hidden="true">${TICKS}<circle class="ring-track" cx="310" cy="310" r="262"/><circle class="ring-arc" cx="310" cy="310" r="262" stroke-dasharray="${(C * frac).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 310 310)"/></svg>`; };
+const sandSvg = (frac, running) => { const lvl = 140 + (1 - frac) * 166, h = (1 - frac) * 80, top = 608 - 1.5 * h;
+  return `<svg viewBox="0 0 360 640" role="img" aria-label="Sanduhr"><defs><clipPath id="sc"><rect x="0" y="${lvl.toFixed(1)}" width="360" height="${(306 - lvl).toFixed(1)}"/></clipPath></defs>
+  <rect class="cap-wood" x="40" y="16" width="280" height="14" rx="7"/><rect class="cap-wood" x="40" y="610" width="280" height="14" rx="7"/>
+  <path class="glass" d="M64 30C64 170 168 250 172 320C168 390 64 470 64 610M296 30C296 170 192 250 188 320C192 390 296 470 296 610"/>
+  ${frac > 0.002 ? `<path class="sandfill" clip-path="url(#sc)" d="M70 40H290C278 150 204 272 186 306H174C156 272 82 150 70 40Z"/>` : ''}
+  ${running && frac > 0.002 ? `<line x1="180" y1="314" x2="180" y2="${Math.max(top, 330).toFixed(0)}" stroke="var(--sand)" stroke-width="1.5" opacity=".8"/>` : ''}
+  ${h > 0.5 ? `<path class="sandfill" d="M74 608C110 ${top.toFixed(1)} 250 ${top.toFixed(1)} 286 608Z"/>` : ''}</svg>`; };
+const TRAIL = [[170, 790], [320, 780], [450, 700], [600, 650], [690, 560], [800, 500], [880, 400], [960, 160]];
+const SEG = TRAIL.slice(1).map((p, i) => Math.hypot(p[0] - TRAIL[i][0], p[1] - TRAIL[i][1]));
+const TOTAL = SEG.reduce((a, b) => a + b, 0);
+const along = (t) => { let d = Math.min(Math.max(t, 0), 1) * TOTAL, pts = [TRAIL[0]];
+  for (let i = 0; i < SEG.length; i++) { if (d <= SEG[i]) { const k = d / SEG[i], a = TRAIL[i], b = TRAIL[i + 1]; const p = [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k]; pts.push(p); return { p, pts }; } d -= SEG[i]; pts.push(TRAIL[i + 1]); }
+  return { p: TRAIL[TRAIL.length - 1], pts }; };
+const bergSvg = (overall, n, slice) => { const me = along(overall); const pl = (ps) => ps.map((p) => p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' L');
+  let camps = ''; for (let k = 1; k < n; k++) { const c = along(k / n).p, done = overall >= k / n;
+    camps += `<circle cx="${c[0].toFixed(1)}" cy="${c[1].toFixed(1)}" r="7" fill="${done ? '#8DB5A2' : '#0F1A21'}" stroke="${done ? '#8DB5A2' : '#4C6A63'}" stroke-width="2"/><text x="${c[0].toFixed(1)}" y="${(c[1] + 32).toFixed(1)}" text-anchor="middle" font-family="Inter,sans-serif" font-size="13" fill="#8FA7A0">Lager ${k}</text>`; }
+  const [x, y] = me.p;
+  return `<svg viewBox="0 0 1440 900" preserveAspectRatio="${slice ? 'xMidYMax slice' : 'xMidYMid meet'}" role="img" aria-label="Bergsteiger auf dem Weg zum Gipfel"><rect width="1440" height="900" fill="#0F1A21"/>
+  <circle cx="1240" cy="150" r="34" fill="#E8E2CF" opacity=".18"/>
+  <path d="M0 900V620L170 470L400 380L600 470L820 300L1060 330L1260 200L1440 270V900Z" fill="#14242B"/>
+  <path d="M0 900V680L210 560L340 590L560 420L660 460L960 150L1180 420L1260 380L1440 500V900Z" fill="#1A2E30"/>
+  <path d="M960 150L912 214L938 206L960 222L984 204L1012 218Z" fill="#C9D6CF" opacity=".75"/>
+  <path d="M${pl(TRAIL)}" fill="none" stroke="#33504D" stroke-width="2" stroke-dasharray="2 8" stroke-linecap="round"/>
+  <path d="M${pl(me.pts)}" fill="none" stroke="#8DB5A2" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  ${camps}<path d="M960 160V112l26 9-26 9" fill="#E9B97A" stroke="#E9B97A" stroke-width="2" stroke-linejoin="round"/>
+  <text x="1000" y="120" font-family="Inter,sans-serif" font-size="13" fill="#8FA7A0">Gipfel</text>
+  <g transform="translate(${x.toFixed(1)} ${y.toFixed(1)})"><circle cx="0" cy="-34" r="6" fill="#E9B97A"/><path d="M0 -27L-3 -10L-10 0M-3 -10L5 0M-1 -22L9 -16" fill="none" stroke="#E9B97A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><rect x="-12" y="-28" width="9" height="13" rx="3" fill="#B98C55"/><path d="M9 -16L14 2" stroke="#9FB4AD" stroke-width="1.5" stroke-linecap="round"/></g></svg>`; };
+
+/* ---------------- Einrichten ---------------- */
+function save() { store.set('settings', S); }
+function matchFav() { return favs.find((f) => f.focus === S.focus && f.breakM === S.breakM && f.sessions === S.sessions && f.style === S.style); }
+function renderSetup() {
+  const on = matchFav();
+  $('favs').innerHTML = favs.map((f) => `<div class="fav${on && on.id === f.id ? ' on' : ''}"><button class="fav-main" data-fav="${f.id}" aria-pressed="${!!(on && on.id === f.id)}"><span class="fav-name">${esc(f.name)}</span><span class="fav-meta">${f.focus} / ${f.breakM} min · ${f.sessions}× · ${STYLE_NAMES[f.style]}</span></button><button class="fav-del" data-del="${f.id}" aria-label="Favorit ${esc(f.name)} löschen"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>`).join('')
+    || '<p class="hint">Noch keine Favoriten. Stell rechts alles ein und speichere es.</p>';
+  $('focus-v').innerHTML = `${S.focus}<small> min</small>`;
+  $('breaks').innerHTML = [3, 5, 10, 15, 20, 30].map((m) => `<button class="pill" data-break="${m}" aria-pressed="${S.breakM === m}">${m} min</button>`).join('');
+  $('sessions').innerHTML = [1, 2, 3, 4, 5, 6, 7, 8].map((n) => `<button class="pill" data-sess="${n}" aria-pressed="${S.sessions === n}" aria-label="${n} Sessions">${n}</button>`).join('');
+  const icons = { ring: '<circle cx="22" cy="22" r="18" stroke-width="2" style="stroke:var(--line)"/><path d="M22 4a18 18 0 1 1-17 23" stroke-width="2.5" stroke-linecap="round"/>',
+    sand: '<path stroke-width="2" d="M12 5h20M12 39h20M14 5c0 10 8 12 8 17s-8 7-8 17M30 5c0 10-8 12-8 17s8 7 8 17"/>',
+    berg: '<path stroke-width="2" stroke-linejoin="round" d="M3 38l14-22 7 10 5-6 12 18z"/><path stroke-width="2" d="M17 16V7l6 2-6 2"/>',
+    digital: '<text x="22" y="28" text-anchor="middle" font-family="Fraunces,serif" font-size="16" style="fill:var(--accent);stroke:none">25:00</text>' };
+  $('styles').innerHTML = Object.keys(STYLE_NAMES).map((k) => `<button class="opt" data-style="${k}" aria-pressed="${S.style === k}"><svg width="44" height="44" viewBox="0 0 44 44" aria-hidden="true">${icons[k]}</svg>${STYLE_NAMES[k]}</button>`).join('');
+  document.querySelectorAll('.mon').forEach((b) => b.setAttribute('aria-pressed', String(+b.dataset.screens === S.screens)));
+  $('dual-note').hidden = S.screens !== 2;
+  $('dual-note').innerHTML = 'Beim Start öffnet sich ein zweites Fenster mit Ablauf, Schritten und Notizen – wenn möglich direkt auf dem anderen Monitor. Blockiert der Browser das Fenster, öffne diese Seite ein zweites Mal mit <code>#plan</code> am Ende der Adresse.';
+  $('goal').value !== S.goal && ($('goal').value = S.goal);
+  $('sound').checked = !!S.sound;
+  const total = S.sessions * S.focus + (S.sessions - 1) * S.breakM;
+  $('summary').textContent = `Gesamt ${dur(total)} · Ende ca. ${clockAt(Date.now() + total * 60000)}`;
+  let bar = ''; for (let i = 0; i < S.sessions; i++) { bar += `<span style="flex:${S.focus};height:14px;background:${i ? '#9FC2B3' : 'var(--accent)'}"></span>`; if (i < S.sessions - 1) bar += `<span style="flex:${S.breakM};height:8px;background:#E3D6B4"></span>`; }
+  $('bar').innerHTML = bar;
+  $('lg-f').textContent = `${S.sessions} × ${S.focus} min Fokus`;
+  $('lg-p').textContent = S.sessions > 1 ? `${S.sessions - 1} × ${S.breakM} min Pause` : 'ohne Pause';
+  const pv = { ring: () => `<div class="c-ring" style="width:190px"><svg viewBox="0 0 620 620" aria-hidden="true"><circle class="ring-track" cx="310" cy="310" r="262"/><circle class="ring-arc" cx="310" cy="310" r="262" stroke-dasharray="1100 1646" transform="rotate(-90 310 310)"/></svg><div class="inner"><span class="time" style="font-size:44px">${S.focus}:00</span></div></div>`,
+    sand: () => sandSvg(0.66, true), berg: () => bergSvg(0.3, S.sessions, false), digital: () => `<span class="time" style="font-size:76px">${S.focus}:00</span>` };
+  $('pv').innerHTML = pv[S.style]();
+  $('pv-cap').textContent = `${STYLE_NAMES[S.style]} · Session 1 von ${S.sessions}`;
+}
+document.addEventListener('click', (e) => {
+  const t = e.target.closest('button'); if (!t || !$('setup').contains(t)) return;
+  const d = t.dataset;
+  if (d.fav) { const f = favs.find((x) => x.id === d.fav); Object.assign(S, { focus: f.focus, breakM: f.breakM, sessions: f.sessions, style: f.style }); }
+  else if (d.del) { favs = favs.filter((x) => x.id !== d.del); store.set('favs', favs); }
+  else if (d.break) S.breakM = +d.break;
+  else if (d.sess) S.sessions = +d.sess;
+  else if (d.style) S.style = d.style;
+  else if (d.screens) S.screens = +d.screens;
+  else if (t.id === 'f-down') S.focus = Math.max(5, S.focus - 5);
+  else if (t.id === 'f-up') S.focus = Math.min(180, S.focus + 5);
+  else if (t.id === 'save-open') { $('save-box').hidden = false; t.hidden = true; $('fav-name').focus(); return; }
+  else if (t.id === 'start') { start(); return; }
+  else return;
+  save(); renderSetup();
+});
+$('save-form').addEventListener('submit', (e) => { e.preventDefault();
+  const name = $('fav-name').value.trim() || `${S.focus}/${S.breakM} · ${S.sessions}×`;
+  favs.push({ id: Date.now().toString(36), name, focus: S.focus, breakM: S.breakM, sessions: S.sessions, style: S.style });
+  store.set('favs', favs); $('fav-name').value = ''; $('save-box').hidden = true; $('save-open').hidden = false; renderSetup(); });
+$('goal').addEventListener('input', (e) => { S.goal = e.target.value; save(); });
+$('sound').addEventListener('change', (e) => { S.sound = e.target.checked; save(); });
+
+/* ---------------- Timer ---------------- */
+let audio = null;
+function chime() { if (!S.sound) return; try { audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+  [[528, 0], [660, 0.35]].forEach(([f, t]) => { const o = audio.createOscillator(), g = audio.createGain(), at = audio.currentTime + t;
+    o.type = 'sine'; o.frequency.value = f; g.gain.setValueAtTime(0.0001, at); g.gain.exponentialRampToValueAtTime(0.18, at + 0.04); g.gain.exponentialRampToValueAtTime(0.0001, at + 2.4);
+    o.connect(g).connect(audio.destination); o.start(at); o.stop(at + 2.5); }); } catch {} }
+let wake = null;
+async function keepAwake() { try { wake = await navigator.wakeLock.request('screen'); } catch {} }
+function fullscreen(on) { try { const d = document; if (on ?? !d.fullscreenElement) d.documentElement.requestFullscreen?.().catch(() => {}); else d.exitFullscreen?.().catch(() => {}); } catch {} }
+
+function phaseLen(r) { return (r.phase === 'focus' ? r.cfg.focus : r.cfg.breakM) * 60000; }
+function left(r) { return r.paused ? r.left : r.endAt - Date.now(); }
+function begin(phase, idx) { const now = Date.now();
+  if (run.log.length) run.log[run.log.length - 1].end = now;
+  Object.assign(run, { phase, idx, paused: false }); run.endAt = now + phaseLen(run);
+  if (phase !== 'done') run.log.push({ kind: phase, idx, start: now, end: null }); }
+function start() {
+  try { audio = audio || new (window.AudioContext || window.webkitAudioContext)(); } catch {}
+  run = { cfg: { focus: S.focus, breakM: S.breakM, sessions: S.sessions, style: S.style, screens: S.screens, goal: S.goal }, log: [], phase: 'focus', idx: 0 };
+  begin('focus', 0);
+  fullscreen(true); keepAwake();
+  if (S.screens === 2) openPlan();
+  lastSec = -1; show(); tick();
+}
+function advance(manual) {
+  if (!run) return;
+  if (run.phase === 'focus') { if (run.idx < run.cfg.sessions - 1) begin('break', run.idx); else finish(); }
+  else if (run.phase === 'break') begin('focus', run.idx + 1);
+  if (!manual) chime();
+  lastSec = -1; show(); tick();
+}
+function finish() { const now = Date.now(); if (run.log.length) run.log[run.log.length - 1].end = now; run.phase = 'done'; run.paused = false; }
+function togglePause() { if (!run || run.phase === 'done') return;
+  if (run.paused) { run.endAt = Date.now() + run.left; run.paused = false; } else { run.left = run.endAt - Date.now(); run.paused = true; }
+  lastSec = -1; tick(); }
+function addFive() { if (!run) return; if (run.paused) run.left += 300000; else run.endAt += 300000; lastSec = -1; tick(); }
+function stop() { run = null; try { wake && wake.release(); } catch {} fullscreen(false); broadcast(); show(); renderSetup(); }
+
+function show() {
+  if (isPlan) return;
+  const ph = run ? run.phase : 'setup';
+  $('setup').hidden = ph !== 'setup'; $('focus').hidden = ph !== 'focus'; $('pause').hidden = ph !== 'break'; $('done').hidden = ph !== 'done';
+  if (ph === 'done') { const n = run.cfg.sessions; $('done-txt').textContent = `${n} ${n === 1 ? 'Session' : 'Sessions'} · ${dur(focusedMs() / 60000)} konzentriert gelernt.`; broadcast(); }
+  $('plan-open').hidden = !(run && run.cfg.screens === 2);
+}
+function focusedMs() { if (!run) return 0; const now = Date.now();
+  return run.log.filter((l) => l.kind === 'focus').reduce((a, l) => a + ((l.end || now) - l.start), 0); }
+function dots(r) { let h = ''; for (let i = 0; i < r.cfg.sessions; i++) { const cls = i < r.idx || (r.phase === 'break' && i === r.idx) ? 'done' : (i === r.idx && r.phase === 'focus' ? 'now' : ''); h += `<i class="${cls}"></i>`; } return h; }
+
+let lastSec = -1;
+function tick() {
+  if (!run || run.phase === 'done' || isPlan) return;
+  const ms = left(run);
+  if (ms <= 0 && !run.paused) { advance(false); return; }
+  const sec = Math.ceil(ms / 1000); if (sec === lastSec) return; lastSec = sec;
+  const frac = Math.max(0, Math.min(1, ms / phaseLen(run))), c = run.cfg, t = fmt(ms);
+  const sub = c.goal ? esc(c.goal) : '';
+  const pausedTag = run.paused ? '<span class="paused-tag">Angehalten</span>' : '';
+  if (run.phase === 'focus') {
+    $('f-top-l').textContent = `Session ${run.idx + 1} von ${c.sessions} · Fokus`;
+    $('f-top-r').textContent = run.paused ? 'Angehalten' : (run.idx < c.sessions - 1 ? 'Pause um ' : 'Fertig um ') + clockAt(run.endAt);
+    $('f-dots').innerHTML = dots(run);
+    const dual = c.screens === 2;
+    const overall = (run.idx + (1 - frac)) / c.sessions;
+    const el = $('clock'); el.className = 'clock';
+    if (c.style === 'ring') el.innerHTML = `<div class="c-ring">${ringSvg(frac)}<div class="inner">${pausedTag}<span class="time">${t}</span>${!dual && sub ? `<span class="sub">${sub}</span>` : ''}</div></div>`;
+    else if (c.style === 'sand') el.innerHTML = `<div class="c-sand">${sandSvg(frac, !run.paused)}<div class="col">${pausedTag}<span class="time">${t}</span><span class="sub">noch übrig von ${c.focus} Minuten</span>${!dual && sub ? `<span class="sub" style="color:#C9C3B3">${sub}</span>` : ''}</div></div>`;
+    else if (c.style === 'berg') { el.className = 'clock c-berg'; el.innerHTML = `${bergSvg(overall, c.sessions, true)}<div class="over">${pausedTag}<span class="time">${t}</span>${sub ? `<span class="sub">${sub}</span>` : ''}</div>`; }
+    else el.innerHTML = `<div class="c-dig">${pausedTag}<span class="time">${t}</span><div class="line"><b style="width:${((1 - frac) * 100).toFixed(2)}%"></b></div>${!dual && sub ? `<span class="sub">${sub}</span>` : ''}</div>`;
+    const tg = $('b-toggle'); tg.setAttribute('aria-label', run.paused ? 'Fortsetzen' : 'Pausieren');
+    tg.innerHTML = run.paused ? '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5l12 7-12 7z"/></svg>' : '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5v14M15 5v14"/></svg>';
+    document.title = `${t} · Lernzeit`;
+  } else {
+    $('p-time').textContent = t; $('p-tag').textContent = run.paused ? 'Angehalten' : 'Pause';
+    $('p-top-l').textContent = `Pause nach Session ${run.idx + 1} von ${c.sessions}`;
+    $('p-top-r').textContent = `Nächste Session: ${run.idx + 2} · ${c.focus} min`;
+    $('p-dots').innerHTML = dots(run);
+    document.title = `Pause ${t} · Lernzeit`;
+  }
+  broadcast();
+}
+setInterval(tick, 250);
+document.addEventListener('visibilitychange', () => { if (!document.hidden && run) { lastSec = -1; tick(); keepAwake(); } });
+
+$('b-toggle').onclick = togglePause;
+$('b-skip').onclick = () => advance(true);
+$('b-fs').onclick = () => fullscreen();
+$('b-stop').onclick = stop;
+$('p-add').onclick = addFive;
+$('p-end').onclick = () => advance(true);
+$('done-back').onclick = stop;
+$('plan-open').onclick = openPlan;
+
+/* Steuerelemente nach 3 s ohne Maus zurücknehmen */
+let idleT; const wakeUi = () => { document.body.classList.remove('idle'); clearTimeout(idleT); idleT = setTimeout(() => run && run.phase === 'focus' && document.body.classList.add('idle'), 3000); };
+['mousemove', 'keydown', 'touchstart'].forEach((ev) => document.addEventListener(ev, wakeUi, { passive: true }));
+
+document.addEventListener('keydown', (e) => {
+  if (e.target.closest('input,textarea')) return;
+  if (e.key === 'f' || e.key === 'F') { e.preventDefault(); fullscreen(); }
+  else if (e.code === 'Space' && run && !isPlan) { e.preventDefault(); togglePause(); }
+});
+
+/* ---------------- Zweiter Monitor ---------------- */
+async function openPlan() {
+  const url = location.href.split('#')[0] + '#plan';
+  let feat = 'popup,width=1280,height=800';
+  try { if ('getScreenDetails' in window) { const sd = await window.getScreenDetails(); const other = sd.screens.find((s) => s !== sd.currentScreen);
+    if (other) feat = `popup,left=${other.availLeft},top=${other.availTop},width=${other.availWidth},height=${other.availHeight}`; } } catch {}
+  let w = null; try { w = window.open(url, 'lernzeit-plan', feat); } catch {}
+  if (!w) { $('dual-note').hidden = false; }
+  setTimeout(broadcast, 600);
+}
+function broadcast() { if (!bc || isPlan) return;
+  bc.postMessage({ type: 'state', run: run ? { phase: run.phase, idx: run.idx, endAt: run.endAt, left: run.left, paused: run.paused, log: run.log, cfg: run.cfg } : null, now: Date.now() }); }
+if (bc && !isPlan) bc.onmessage = (e) => { const m = e.data; if (m.type === 'hello') broadcast();
+  else if (m.type === 'cmd' && run) { ({ toggle: togglePause, skip: () => advance(true), stop, add5: addFive })[m.cmd]?.(); } };
+
+function initPlan() {
+  $('setup').hidden = true; $('plan').hidden = false; document.title = 'Plan · Lernzeit';
+  let R = null, off = 0;
+  const send = (cmd) => bc && bc.postMessage({ type: 'cmd', cmd });
+  $('pl-toggle').onclick = () => send('toggle'); $('pl-skip').onclick = () => send('skip'); $('pl-stop').onclick = () => send('stop'); $('pl-fs').onclick = () => fullscreen();
+  let todos = store.get('todos', []);
+  const drawTodos = () => { $('todos').innerHTML = todos.map((t, i) => `<div class="todo${t.done ? ' checked' : ''}"><input type="checkbox" id="td${i}" data-i="${i}" ${t.done ? 'checked' : ''}><span><label for="td${i}">${esc(t.text)}</label></span><button data-x="${i}" aria-label="Schritt entfernen"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>`).join(''); };
+  $('todos').addEventListener('change', (e) => { const i = +e.target.dataset.i; todos[i].done = e.target.checked; store.set('todos', todos); drawTodos(); });
+  $('todos').addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; todos.splice(+b.dataset.x, 1); store.set('todos', todos); drawTodos(); });
+  $('todo-form').addEventListener('submit', (e) => { e.preventDefault(); const v = $('todo-in').value.trim(); if (!v) return; todos.push({ text: v, done: false }); store.set('todos', todos); $('todo-in').value = ''; drawTodos(); });
+  $('notes').value = store.get('notes', ''); $('notes').addEventListener('input', (e) => store.set('notes', e.target.value));
+  drawTodos();
+  const draw = () => {
+    $('pl-wait').hidden = !!R;
+    if (!R || R.phase === 'done') { $('pl-time').textContent = '--:--'; $('pl-next').textContent = R ? 'Lernblock abgeschlossen' : '';
+      $('pl-phase').textContent = 'Ziel dieser Session'; $('pl-goal').textContent = R ? 'Gipfel erreicht.' : 'Wartet auf den Timer …'; if (!R) { $('tl').innerHTML = ''; } }
+    if (!R) return;
+    const now = Date.now() + off, c = R.cfg, ms = R.paused ? R.left : R.endAt - now;
+    if (R.phase !== 'done') { $('pl-time').textContent = fmt(ms);
+      $('pl-next').textContent = R.paused ? 'Angehalten' : (R.phase === 'break' ? 'Weiter um ' : R.idx < c.sessions - 1 ? 'Pause um ' : 'Fertig um ') + clockAt(R.endAt - off);
+      $('pl-phase').textContent = R.phase === 'break' ? 'Pause' : `Session ${R.idx + 1} von ${c.sessions}`;
+      $('pl-goal').textContent = c.goal || 'Konzentriert lernen';
+      $('pl-toggle').textContent = R.paused ? 'Fortsetzen' : 'Pausieren'; }
+    /* Ablauf: vergangene Phasen aus dem Log, künftige hochgerechnet */
+    const rows = []; R.log.forEach((l) => rows.push({ kind: l.kind, idx: l.idx, s: l.start, e: l.end }));
+    let t = R.phase === 'done' ? 0 : (R.paused ? now + R.left : R.endAt);
+    if (R.phase !== 'done') { const cur = rows[rows.length - 1]; if (cur) cur.e = t;
+      let k = R.phase === 'focus' ? R.idx : R.idx + 1, kind = R.phase === 'focus' ? 'break' : 'focus';
+      while (k < c.sessions) { if (kind === 'break') { if (k >= c.sessions - 1) break; rows.push({ kind, idx: k, s: t, e: t + c.breakM * 60000, future: true }); t += c.breakM * 60000; kind = 'focus'; k++; }
+        else { rows.push({ kind, idx: k, s: t, e: t + c.focus * 60000, future: true }); t += c.focus * 60000; kind = 'break'; } } }
+    $('tl').innerHTML = rows.map((r, i) => { const isNow = !r.future && i === R.log.length - 1 && R.phase !== 'done'; const st = r.future ? '' : isNow ? 'now' : 'done';
+      return `<li class="${st}${r.kind === 'break' ? ' brk' : ''}"><div class="rail"><b></b><s></s></div><div class="row"><span>${r.kind === 'break' ? 'Pause' : 'Session ' + (r.idx + 1)}</span><time>${clockAt(r.s - off)} – ${clockAt((r.e || now) - off)}</time></div></li>`; }).join('');
+    const foc = R.log.filter((l) => l.kind === 'focus').reduce((a, l) => a + ((l.end || (R.paused ? (R.endAt - R.left) : now)) - l.start), 0);
+    $('pl-total').textContent = dur(Math.max(0, foc) / 60000);
+  };
+  if (bc) { bc.onmessage = (e) => { if (e.data.type === 'state') { R = e.data.run; off = e.data.now - Date.now(); draw(); } }; bc.postMessage({ type: 'hello' }); }
+  else { $('pl-wait').textContent = 'Dieser Browser unterstützt keine Synchronisation zwischen Fenstern. Nutze einen aktuellen Chrome, Edge, Firefox oder Safari.'; }
+  setInterval(draw, 1000); draw();
+}
+
+if (isPlan) initPlan(); else renderSetup();
+window.addEventListener('hashchange', () => location.reload());
+})();
+</script>
+</body>
+</html>
