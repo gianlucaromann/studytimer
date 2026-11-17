@@ -204,6 +204,10 @@ kbd{font-family:var(--body);font-size:12px;padding:2px 6px;border:1px solid var(
 .done-notes{max-width:60ch;width:100%;box-sizing:border-box;text-align:left;background:#18262A;border-radius:16px;padding:18px 20px;display:flex;flex-direction:column;gap:8px}
 .done-notes .label{color:var(--f-muted)}
 .done-notes p{margin:0;color:var(--f-ink);font-size:15px;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere;max-height:30vh;overflow:auto}
+.notice .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+.notice b{color:var(--ink);font-weight:600}
+.toast{position:absolute;z-index:3;top:calc(84px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);max-width:min(560px,calc(100% - 32px));box-sizing:border-box;background:#18262A;border:1px solid var(--f-line);color:var(--f-ink);border-radius:12px;padding:12px 18px;font-size:14px;line-height:1.5;text-align:center}
+.fs-banner{grid-column:1/-1;justify-self:center;height:44px;padding:0 20px;border-radius:22px;border:1px dashed var(--f-line);background:transparent;color:#B8C9C3;font-size:14px}
 .wait{color:var(--f-muted);font-size:15px;line-height:1.6;max-width:56ch}
 </style>
 </head>
@@ -282,6 +286,7 @@ kbd{font-family:var(--body);font-size:12px;padding:2px 6px;border:1px solid var(
 <section id="focus" class="view stage" hidden aria-label="Fokus">
   <div class="stage-top"><span id="f-top-l"></span><span id="f-top-r"></span></div>
   <div class="clock" id="clock"></div>
+  <div class="toast" id="toast" role="status" hidden></div>
   <div class="stage-bottom">
     <div class="dots" id="f-dots"></div>
     <div class="ctrls">
@@ -335,6 +340,7 @@ kbd{font-family:var(--body);font-size:12px;padding:2px 6px;border:1px solid var(
 <!-- ===== Plan (zweiter Monitor) ===== -->
 <section id="plan" class="view" hidden aria-label="Lernplan">
   <div class="plan-wrap">
+    <button class="fs-banner" id="fs-banner">Hier klicken, um dieses Fenster im Vollbild zu zeigen</button>
     <section aria-labelledby="tl-h" style="display:flex;flex-direction:column">
       <h2 class="label" id="tl-h">Heutiger Ablauf</h2>
       <ol class="tl" id="tl"></ol>
@@ -345,7 +351,7 @@ kbd{font-family:var(--body);font-size:12px;padding:2px 6px;border:1px solid var(
         <div><span class="label" id="pl-phase">Ziel dieser Session</span><h1 id="pl-goal">Wartet auf den Timer …</h1></div>
         <div class="t"><div class="time" id="pl-time">--:--</div><div id="pl-next"></div></div>
       </div>
-      <p class="wait" id="pl-wait">Dieses Fenster zeigt Ablauf, Schritte und Notizen. Starte den Timer im Hauptfenster – beide Fenster bleiben automatisch synchron. Zieh dieses Fenster auf deinen zweiten Monitor und drücke <kbd>F</kbd> für Vollbild.</p>
+      <p class="wait" id="pl-wait">Dieses Fenster zeigt Ablauf, Schritte und Notizen. Starte den Timer im Hauptfenster – beide Fenster bleiben automatisch synchron. Liegt dieses Fenster nicht auf dem zweiten Monitor, zieh es hinüber und klick hinein für Vollbild.</p>
       <div style="display:flex;flex-direction:column;gap:10px">
         <span class="label">Schritte</span>
         <div class="todo-list" id="todos"></div>
@@ -382,7 +388,10 @@ const DEFAULT_FAVS = [
 let S = Object.assign({ focus: 50, breakM: 10, sessions: 3, style: 'ring', screens: 1, goal: '', sound: true }, store.get('settings', {}));
 let favs = store.get('favs', DEFAULT_FAVS);
 let run = null; // {phase, idx, endAt, left, paused, log:[{kind,start,end}], cfg}
-const isPlan = location.hash === '#plan';
+const isPlan = location.hash.startsWith('#plan');
+/* Jedes Uhr-Fenster bekommt eine eigene Kennung, damit zwei offene Tabs sich nicht gegenseitig steuern */
+const pairId = isPlan ? (location.hash.slice(6) || null) : Math.random().toString(36).slice(2, 10);
+let screenDetails = null, screenState = 'unknown', planWin = null, popupBlocked = false;
 const bc = ('BroadcastChannel' in window) ? new BroadcastChannel('studytimer') : null;
 
 const fmt = (ms) => { const s = Math.max(0, Math.ceil(ms / 1000)); const m = Math.floor(s / 60); const h = Math.floor(m / 60);
@@ -427,6 +436,30 @@ const bergSvg = (overall, n, slice) => { const me = along(overall); const pl = (
 
 /* ---------------- Einrichten ---------------- */
 function save() { store.set('settings', S); }
+function dualNote() {
+  const planUrl = esc(location.href.split('#')[0] + '#plan');
+  const others = screenDetails ? screenDetails.screens.length : 0;
+  let t = {
+    unsupported: 'Dieser Browser kann Fenster nicht selbst auf einen anderen Monitor legen. Beim Start öffnet sich das Plan-Fenster hier: zieh es auf den zweiten Monitor und klick hinein für Vollbild. <b>Chrome und Edge</b> machen das automatisch.',
+    ask: 'Damit Uhr und Plan automatisch auf zwei Monitoren erscheinen, braucht der Browser einmalig deine Erlaubnis zur Fensterverwaltung.<div class="row"><button class="btn-ghost" data-act="screens">Bildschirme erkennen</button></div>',
+    denied: 'Die Erlaubnis zur Fensterverwaltung ist blockiert. Erlaube sie in den Website-Einstellungen (Symbol links in der Adresszeile) – oder zieh das Plan-Fenster nach dem Start selbst hinüber.<div class="row"><button class="btn-ghost" data-act="screens">Erneut versuchen</button></div>',
+    granted: others >= 2 ? `<b>Bereit.</b> Die Uhr läuft im Vollbild auf diesem Monitor, Ablauf und Notizen öffnen sich auf «${esc((screenDetails.screens.find((x) => x !== screenDetails.currentScreen) || {}).label || 'zweiter Monitor')}».`
+      : '<b>Nur ein Monitor erkannt.</b> Schliess den zweiten Monitor an – oder wähle «1 Monitor».<div class="row"><button class="btn-ghost" data-act="screens">Erneut prüfen</button></div>',
+    unknown: 'Bildschirme werden geprüft …'
+  }[screenState];
+  if (popupBlocked) t += `<div class="row">Das Plan-Fenster wurde blockiert. Erlaube Pop-ups für diese Seite oder öffne <code>${planUrl}</code> in einem zweiten Fenster.</div>`;
+  return t;
+}
+async function prepareScreens(prompt) {
+  if (!('getScreenDetails' in window)) { screenState = 'unsupported'; renderSetup(); return; }
+  if (!prompt) { let st = null;
+    for (const name of ['window-management', 'window-placement']) { try { st = (await navigator.permissions.query({ name })).state; break; } catch {} }
+    if (st !== 'granted') { screenState = st === 'denied' ? 'denied' : 'ask'; renderSetup(); return; } }
+  try { screenDetails = await window.getScreenDetails(); screenState = 'granted';
+    screenDetails.addEventListener('screenschange', () => renderSetup()); screenDetails.addEventListener('currentscreenchange', () => renderSetup());
+  } catch { screenDetails = null; screenState = 'denied'; }
+  renderSetup();
+}
 function matchFav() { return favs.find((f) => f.focus === S.focus && f.breakM === S.breakM && f.sessions === S.sessions && f.style === S.style); }
 function renderSetup() {
   const on = matchFav();
@@ -442,7 +475,7 @@ function renderSetup() {
   $('styles').innerHTML = Object.keys(STYLE_NAMES).map((k) => `<button class="opt" data-style="${k}" aria-pressed="${S.style === k}"><svg width="44" height="44" viewBox="0 0 44 44" aria-hidden="true">${icons[k]}</svg>${STYLE_NAMES[k]}</button>`).join('');
   document.querySelectorAll('.mon').forEach((b) => b.setAttribute('aria-pressed', String(+b.dataset.screens === S.screens)));
   $('dual-note').hidden = S.screens !== 2;
-  $('dual-note').innerHTML = 'Beim Start öffnet sich ein zweites Fenster mit Ablauf, Schritten und Notizen – wenn möglich direkt auf dem anderen Monitor. Blockiert der Browser das Fenster, öffne diese Seite ein zweites Mal mit <code>#plan</code> am Ende der Adresse.';
+  $('dual-note').innerHTML = dualNote();
   $('goal').value !== S.goal && ($('goal').value = S.goal);
   $('sound').checked = !!S.sound;
   const total = S.sessions * S.focus + (S.sessions - 1) * S.breakM;
@@ -464,7 +497,8 @@ document.addEventListener('click', (e) => {
   else if (d.break) S.breakM = +d.break;
   else if (d.sess) S.sessions = +d.sess;
   else if (d.style) S.style = d.style;
-  else if (d.screens) S.screens = +d.screens;
+  else if (d.screens) { S.screens = +d.screens; if (S.screens === 2 && screenState !== 'granted') { save(); prepareScreens(true); } }
+  else if (d.act === 'screens') { prepareScreens(true); return; }
   else if (t.id === 'f-down') S.focus = Math.max(5, S.focus - 5);
   else if (t.id === 'f-up') S.focus = Math.min(180, S.focus + 5);
   else if (t.id === 'save-open') { $('save-box').hidden = false; t.hidden = true; $('fav-name').focus(); return; }
@@ -499,8 +533,8 @@ function start() {
   try { audio = audio || new (window.AudioContext || window.webkitAudioContext)(); } catch {}
   run = { cfg: { focus: S.focus, breakM: S.breakM, sessions: S.sessions, style: S.style, screens: S.screens, goal: S.goal }, log: [], phase: 'focus', idx: 0 };
   begin('focus', 0);
-  fullscreen(true); keepAwake();
-  if (S.screens === 2) openPlan();
+  if (S.screens === 2) launchDual(); else fullscreen(true);
+  keepAwake();
   lastSec = -1; show(); tick();
 }
 function advance(manual) {
@@ -515,7 +549,7 @@ function togglePause() { if (!run || run.phase === 'done') return;
   if (run.paused) { run.endAt = Date.now() + run.left; run.paused = false; } else { run.left = run.endAt - Date.now(); run.paused = true; }
   lastSec = -1; tick(); }
 function addFive() { if (!run) return; if (run.paused) run.left += 300000; else run.endAt += 300000; lastSec = -1; tick(); }
-function stop() { run = null; toggleNotes(false); document.title = 'Studytimer'; try { wake && wake.release(); } catch {} fullscreen(false); broadcast(); show(); renderSetup(); }
+function stop() { run = null; closePlan(); toggleNotes(false); document.title = 'Studytimer'; try { wake && wake.release(); } catch {} fullscreen(false); broadcast(); show(); renderSetup(); }
 
 function show() {
   if (isPlan) return;
@@ -599,24 +633,48 @@ document.addEventListener('keydown', (e) => {
 });
 
 /* ---------------- Zweiter Monitor ---------------- */
-async function openPlan() {
-  const url = location.href.split('#')[0] + '#plan';
-  let feat = 'popup,width=1280,height=800';
-  try { if ('getScreenDetails' in window) { const sd = await window.getScreenDetails(); const other = sd.screens.find((s) => s !== sd.currentScreen);
-    if (other) feat = `popup,left=${other.availLeft},top=${other.availTop},width=${other.availWidth},height=${other.availHeight}`; } } catch {}
-  let w = null; try { w = window.open(url, 'studytimer-plan', feat); } catch {}
-  if (!w) { $('dual-note').hidden = false; }
-  setTimeout(broadcast, 600);
+function otherScreen() { if (!screenDetails) return null; const cur = screenDetails.currentScreen; return screenDetails.screens.find((x) => x !== cur) || null; }
+function openPlanWindow() {
+  const o = otherScreen();
+  const feat = o ? `popup,left=${o.availLeft},top=${o.availTop},width=${o.availWidth},height=${o.availHeight}` : 'popup,width=1280,height=800';
+  let w = null; try { w = window.open(location.href.split('#')[0] + '#plan-' + pairId, 'studytimer-plan-' + pairId, feat); } catch {}
+  popupBlocked = !w; if (w) planWin = w;
+  setTimeout(broadcast, 800); setTimeout(broadcast, 2000);
+  return w;
 }
+function toast(msg, ms) { const t = $('toast'); t.textContent = msg; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => { t.hidden = true; }, ms || 9000); }
+function launchDual() {
+  const o = otherScreen();
+  if (o) {
+    /* Mit Erlaubnis zur Fensterverwaltung: Uhr im Vollbild auf diesem Monitor, im selben Klick das Plan-Fenster auf dem anderen */
+    try { const r = document.documentElement.requestFullscreen({ screen: screenDetails.currentScreen }); r && r.catch(() => {}); } catch {}
+    if (!openPlanWindow()) toast('Das Plan-Fenster wurde blockiert. Erlaube Pop-ups für diese Seite und klicke dann unten auf das Fenster-Symbol.');
+  } else {
+    /* Ohne Erlaubnis darf ein Klick nur eines von beiden: zuerst das Plan-Fenster öffnen */
+    if (openPlanWindow()) toast('Zieh das Plan-Fenster auf deinen zweiten Monitor und klick dort hinein für Vollbild. Danach hier F drücken.', 14000);
+    else toast('Das Plan-Fenster wurde blockiert. Erlaube Pop-ups für diese Seite und klicke dann unten auf das Fenster-Symbol.');
+  }
+}
+function openPlan() { if (planWin && !planWin.closed) { try { planWin.focus(); } catch {} return; } openPlanWindow(); }
+function closePlan() { if (bc) bc.postMessage({ type: 'bye', id: pairId }); try { planWin && !planWin.closed && planWin.close(); } catch {} planWin = null; }
 function broadcast() { if (!bc || isPlan) return;
-  bc.postMessage({ type: 'state', run: run ? { phase: run.phase, idx: run.idx, endAt: run.endAt, left: run.left, paused: run.paused, log: run.log, cfg: run.cfg } : null, now: Date.now() }); }
-if (bc && !isPlan) bc.onmessage = (e) => { const m = e.data; if (m.type === 'hello') broadcast();
+  bc.postMessage({ type: 'state', id: pairId, run: run ? { phase: run.phase, idx: run.idx, endAt: run.endAt, left: run.left, paused: run.paused, log: run.log, cfg: run.cfg } : null, now: Date.now() }); }
+if (bc && !isPlan) bc.onmessage = (e) => { const m = e.data; if (m.id && m.id !== pairId) return;
+  if (m.type === 'hello') broadcast();
   else if (m.type === 'cmd' && run) { ({ toggle: togglePause, skip: () => advance(true), stop, add5: addFive })[m.cmd]?.(); } };
+if (!isPlan) { window.addEventListener('pagehide', closePlan); setInterval(() => { if (planWin && !planWin.closed) broadcast(); }, 2000); }
 
 function initPlan() {
   $('setup').hidden = true; $('plan').hidden = false; document.title = 'Plan · Studytimer';
   let R = null, off = 0;
-  const send = (cmd) => bc && bc.postMessage({ type: 'cmd', cmd });
+  let mainId = pairId;
+  const send = (cmd) => bc && bc.postMessage({ type: 'cmd', cmd, id: mainId });
+  const ended = () => { R = null; try { window.close(); } catch {} draw();
+    $('pl-wait').hidden = false; $('pl-wait').textContent = 'Das Uhr-Fenster wurde geschlossen. Du kannst dieses Fenster schliessen.'; };
+  const fsBanner = () => { $('fs-banner').hidden = !!document.fullscreenElement || !document.fullscreenEnabled; };
+  document.addEventListener('fullscreenchange', fsBanner); fsBanner();
+  $('plan').addEventListener('pointerdown', (e) => { if (!document.fullscreenElement && !e.target.closest('#pl-fs')) fullscreen(true); });
+  setInterval(() => { try { if (window.opener && window.opener.closed) ended(); } catch {} }, 1000);
   $('pl-toggle').onclick = () => send('toggle'); $('pl-skip').onclick = () => send('skip'); $('pl-stop').onclick = () => send('stop'); $('pl-fs').onclick = () => fullscreen();
   let todos = store.get('todos', []);
   const drawTodos = () => { $('todos').innerHTML = todos.map((t, i) => `<div class="todo${t.done ? ' checked' : ''}"><input type="checkbox" id="td${i}" data-i="${i}" ${t.done ? 'checked' : ''}><span><label for="td${i}">${esc(t.text)}</label></span><button data-x="${i}" aria-label="Schritt entfernen"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>`).join(''); };
@@ -647,12 +705,16 @@ function initPlan() {
     const foc = R.log.filter((l) => l.kind === 'focus').reduce((a, l) => a + ((l.end || (R.paused ? (R.endAt - R.left) : now)) - l.start), 0);
     $('pl-total').textContent = dur(Math.max(0, foc) / 60000);
   };
-  if (bc) { bc.onmessage = (e) => { if (e.data.type === 'state') { R = e.data.run; off = e.data.now - Date.now(); draw(); } }; bc.postMessage({ type: 'hello' }); }
+  if (bc) { bc.onmessage = (e) => { const m = e.data;
+      if (mainId && m.id && m.id !== mainId) return;
+      if (m.type === 'state') { if (!mainId) mainId = m.id; R = m.run; off = m.now - Date.now(); draw(); }
+      else if (m.type === 'bye') ended(); };
+    bc.postMessage({ type: 'hello', id: mainId }); }
   else { $('pl-wait').textContent = 'Dieser Browser unterstützt keine Synchronisation zwischen Fenstern. Nutze einen aktuellen Chrome, Edge, Firefox oder Safari.'; }
   setInterval(draw, 1000); draw();
 }
 
-if (isPlan) initPlan(); else renderSetup();
+if (isPlan) initPlan(); else { renderSetup(); if (S.screens === 2) prepareScreens(false); }
 window.addEventListener('hashchange', () => location.reload());
 })();
 </script>
