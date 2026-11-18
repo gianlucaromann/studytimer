@@ -4,7 +4,7 @@ Ruhiger Study-Timer im Vollbild: Favoriten, Sessions, Pausen, Notizen, Timer-Kla
 
 Öffnen: `index.html` im Browser. Zweiter Monitor: `index.html#plan`.
 
-Auf dem Smartphone: Seite öffnen und «Zum Home-Bildschirm» wählen (Safari: Teilen-Menü, Chrome: Menü › App installieren). Logo und App-Name kommen aus `manifest.webmanifest` und `icons/`.
+Als App: In Chrome und Edge (Computer und Android) erscheint oben der Knopf «App installieren». Auf dem iPhone: Safari › Teilen › «Zum Home-Bildschirm», auf dem Mac in Safari: Ablage › «Zum Dock hinzufügen». Nach dem ersten Öffnen läuft die App auch offline (`sw.js`). Logo und App-Name kommen aus `manifest.webmanifest` und `icons/`.
 
 ## Daten
 
