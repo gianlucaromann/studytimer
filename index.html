@@ -872,7 +872,15 @@ window.addEventListener('appinstalled', () => { installEvt = null; $('install').
 $('install').onclick = async () => { if (!installEvt) return; installEvt.prompt(); try { await installEvt.userChoice; } catch {} installEvt = null; $('install').hidden = true; };
 if ('serviceWorker' in navigator && window.isSecureContext && location.protocol !== 'file:' && window.top === window) navigator.serviceWorker.register('sw.js').catch(() => {});
 
-if (isPlan) initPlan(); else { renderSetup(); if (S.screens === 2) prepareScreens(false); }
+/* Werte aus dem Link übernehmen, z. B. ?focus=50&break=10&sessions=2&goal=Mathe */
+const fromLink = !isPlan && (() => { const q = new URLSearchParams(location.search); if (![...q.keys()].length) return false;
+  const num = (k, lo, hi) => { const v = parseInt(q.get(k), 10); return Number.isFinite(v) ? Math.min(hi, Math.max(lo, v)) : null; };
+  const f = num('focus', 1, 180), b = num('break', 1, 60), n = num('sessions', 1, 8);
+  if (f !== null) S.focus = f; if (b !== null) S.breakM = b; if (n !== null) S.sessions = n;
+  if (q.has('goal')) S.goal = q.get('goal').slice(0, 80);
+  if (STYLE_NAMES[q.get('style')]) S.style = q.get('style');
+  save(); history.replaceState(null, '', location.pathname + location.hash); return true; })();
+if (isPlan) initPlan(); else { renderSetup(); if (S.screens === 2) prepareScreens(false); if (fromLink) $('start').focus(); }
 window.addEventListener('hashchange', () => location.reload());
 })();
 </script>
